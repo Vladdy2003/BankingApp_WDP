@@ -1,0 +1,6 @@
+@BankingApp_WDP_HostAddress = http://localhost:5047
+
+GET {{BankingApp_WDP_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
