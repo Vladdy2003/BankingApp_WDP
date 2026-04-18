@@ -1,15 +1,23 @@
-using Microsoft.AspNetCore.Identity;
 using System.ComponentModel.DataAnnotations;
 
-namespace BankingApp.Models;
+namespace BankingApp.DTOs.Auth;
 
-public class ApplicationUser : IdentityUser
+public class RegisterRequest
 {
     [Required, MaxLength(100)]
     public string FirstName { get; set; } = string.Empty;
 
     [Required, MaxLength(100)]
     public string LastName { get; set; } = string.Empty;
+
+    [Required, EmailAddress]
+    public string Email { get; set; } = string.Empty;
+
+    [Required, MinLength(8)]
+    public string Password { get; set; } = string.Empty;
+
+    [Phone]
+    public string? PhoneNumber { get; set; }
 
     [MaxLength(200)]
     public string? Address { get; set; }
@@ -18,9 +26,4 @@ public class ApplicationUser : IdentityUser
 
     [MaxLength(13)]
     public string? CNP { get; set; }
-
-    public string? RefreshToken { get; set; }
-    public DateTime? RefreshTokenExpiry { get; set; }
-
-    public ICollection<Account> Accounts { get; set; } = new List<Account>();
 }
