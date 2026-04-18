@@ -3,10 +3,10 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
-namespace BankingApp.Migrations
+namespace BankingApp_WDP.Migrations
 {
     /// <inheritdoc />
-    public partial class _20260418154616_InitialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

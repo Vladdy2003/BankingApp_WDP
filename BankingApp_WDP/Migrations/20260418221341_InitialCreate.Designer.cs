@@ -9,18 +9,18 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
 
-namespace BankingApp.Migrations
+namespace BankingApp_WDP.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260418154616_InitialCreate")]
-    partial class _20260418154616_InitialCreate
+    [Migration("20260418221341_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "11.0.0-preview.3.26207.106")
+                .HasAnnotation("ProductVersion", "10.0.6")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
