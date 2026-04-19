@@ -1,6 +1,7 @@
 using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
+using BankingApp.Patterns.Behavioral.Command;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
@@ -98,6 +99,9 @@ builder.Services.AddScoped<ITransactionValidator>(sp =>
     accountStatus.SetNext(balance).SetNext(dailyLimit).SetNext(fraud);
     return accountStatus;
 });
+
+// Command Pattern #7 — TransactionCommandInvoker: execută comenzi și menține istoricul pentru rollback
+builder.Services.AddScoped<ITransactionCommandInvoker, TransactionCommandInvoker>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
