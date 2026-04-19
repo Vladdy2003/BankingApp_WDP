@@ -117,6 +117,10 @@ builder.Services.AddScoped<ITransactionProcessor>(sp =>
     return processor;
 });
 
+// Step 4.3 — Card data generators (Singleton: stateless, thread-safe)
+builder.Services.AddSingleton<ICardNumberGenerator, CardNumberGenerator>();
+builder.Services.AddSingleton<ICVVGenerator, CVVGenerator>();
+
 // Prototype Pattern #10 — CardFactory clonează template-ul potrivit și personalizează cardul pentru utilizatorul specific
 builder.Services.AddSingleton<ICardFactory, CardFactory>();
 

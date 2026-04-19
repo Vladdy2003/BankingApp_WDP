@@ -1,4 +1,5 @@
 using BankingApp.Models;
+using BankingApp.Utilities;
 
 namespace BankingApp.Patterns.Creational.Prototype;
 
@@ -10,9 +11,14 @@ public interface ICardFactory
 public class CardFactory : ICardFactory
 {
     private readonly Dictionary<CardType, CardTemplate> _templates;
+    private readonly ICardNumberGenerator _cardNumberGenerator;
+    private readonly ICVVGenerator _cvvGenerator;
 
-    public CardFactory()
+    public CardFactory(ICardNumberGenerator cardNumberGenerator, ICVVGenerator cvvGenerator)
     {
+        _cardNumberGenerator = cardNumberGenerator;
+        _cvvGenerator = cvvGenerator;
+
         _templates = new Dictionary<CardType, CardTemplate>
         {
             [CardType.Debit]   = new StandardDebitTemplate(),
@@ -31,8 +37,8 @@ public class CardFactory : ICardFactory
         return new Card
         {
             AccountId    = accountId,
-            CardNumber   = GenerateCardNumber(),
-            CVVHash      = GenerateCvvHash(),
+            CardNumber   = _cardNumberGenerator.Generate(),
+            CVVHash      = _cvvGenerator.GenerateHash(),
             ExpiryDate   = DateTime.UtcNow.AddYears(3),
             Type         = clone.CardType,
             Status       = CardStatus.Pending,
@@ -40,35 +46,5 @@ public class CardFactory : ICardFactory
             MonthlyLimit = monthlyLimit ?? clone.MonthlyLimit,
             CreatedAt    = DateTime.UtcNow
         };
-    }
-
-    // Luhn-valid 16-digit card number formatted as XXXX XXXX XXXX XXXX
-    private static string GenerateCardNumber()
-    {
-        var rng = Random.Shared;
-        var digits = new int[15];
-        for (int i = 0; i < 15; i++)
-            digits[i] = rng.Next(0, 10);
-
-        // Luhn check digit
-        int sum = 0;
-        for (int i = 14; i >= 0; i--)
-        {
-            int d = digits[i];
-            if ((14 - i) % 2 == 0) { d *= 2; if (d > 9) d -= 9; }
-            sum += d;
-        }
-        int checkDigit = (10 - (sum % 10)) % 10;
-
-        var all = digits.Append(checkDigit).ToArray();
-        return string.Join(" ", Enumerable.Range(0, 4).Select(g => string.Concat(all.Skip(g * 4).Take(4))));
-    }
-
-    // 3-digit CVV hashed with SHA256
-    private static string GenerateCvvHash()
-    {
-        var cvv = Random.Shared.Next(100, 1000).ToString();
-        var bytes = System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(cvv));
-        return Convert.ToHexString(bytes);
     }
 }
