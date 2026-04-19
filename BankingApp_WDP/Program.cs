@@ -2,6 +2,7 @@ using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Behavioral.Command;
+using BankingApp.Patterns.Behavioral.Strategy;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
@@ -114,6 +115,12 @@ builder.Services.AddScoped<ITransactionProcessor>(sp =>
     processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
     return processor;
 });
+
+// Strategy Pattern #9 — InterestCalculationStrategy: algoritmi diferiți de dobândă per tip de cont
+builder.Services.AddScoped<SimpleInterestStrategy>();
+builder.Services.AddScoped<CompoundInterestStrategy>();
+builder.Services.AddScoped<NoInterestStrategy>();
+builder.Services.AddScoped<IInterestService, InterestService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
