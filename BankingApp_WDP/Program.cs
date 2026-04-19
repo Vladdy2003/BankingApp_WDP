@@ -1,7 +1,9 @@
 using BankingApp.Data;
 using BankingApp.Models;
+using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Services;
+using BankingApp.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -50,6 +52,10 @@ builder.Services.AddAuthentication(options =>
 
 // Servicii aplicație
 builder.Services.AddScoped<IAuthService, AuthService>();
+
+// Factory Method Pattern #2 — AccountFactory + IBANGenerator
+builder.Services.AddSingleton<IIBANGenerator, IBANGenerator>();
+builder.Services.AddScoped<IAccountFactory, AccountFactory>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
