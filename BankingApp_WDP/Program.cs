@@ -1,5 +1,6 @@
 using BankingApp.Data;
 using BankingApp.Models;
+using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Services;
@@ -56,6 +57,14 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 // Factory Method Pattern #2 — AccountFactory + IBANGenerator
 builder.Services.AddSingleton<IIBANGenerator, IBANGenerator>();
 builder.Services.AddScoped<IAccountFactory, AccountFactory>();
+
+// Abstract Factory Pattern #3 — NotificationFactory
+// ProductionNotificationFactory in production; swap to MockNotificationFactory in tests.
+var isDevelopment = builder.Environment.IsDevelopment();
+if (isDevelopment)
+    builder.Services.AddScoped<INotificationFactory, MockNotificationFactory>();
+else
+    builder.Services.AddScoped<INotificationFactory, ProductionNotificationFactory>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
