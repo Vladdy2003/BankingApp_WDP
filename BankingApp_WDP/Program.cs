@@ -3,11 +3,13 @@ using BankingApp.Models;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Proxy;
 using BankingApp.Services;
 using BankingApp.Utilities;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -65,6 +67,17 @@ if (isDevelopment)
     builder.Services.AddScoped<INotificationFactory, MockNotificationFactory>();
 else
     builder.Services.AddScoped<INotificationFactory, ProductionNotificationFactory>();
+
+// Proxy Pattern #4 — AccountServiceProxy wrappează AccountService adăugând permisiuni, caching și logging
+builder.Services.AddMemoryCache();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<IAccountService>(sp => new AccountServiceProxy(
+    sp.GetRequiredService<AccountService>(),
+    sp.GetRequiredService<IMemoryCache>(),
+    sp.GetRequiredService<ILoggerService>(),
+    sp.GetRequiredService<IHttpContextAccessor>()
+));
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
