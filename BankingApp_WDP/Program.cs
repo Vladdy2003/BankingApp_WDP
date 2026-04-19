@@ -8,6 +8,7 @@ using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Patterns.Structural.Decorator;
+using BankingApp.Patterns.Creational.Prototype;
 using BankingApp.Patterns.Structural.Proxy;
 using BankingApp.Services;
 using BankingApp.Utilities;
@@ -115,6 +116,9 @@ builder.Services.AddScoped<ITransactionProcessor>(sp =>
     processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
     return processor;
 });
+
+// Prototype Pattern #10 — CardFactory clonează template-ul potrivit și personalizează cardul pentru utilizatorul specific
+builder.Services.AddSingleton<ICardFactory, CardFactory>();
 
 // Strategy Pattern #9 — InterestCalculationStrategy: algoritmi diferiți de dobândă per tip de cont
 builder.Services.AddScoped<SimpleInterestStrategy>();
