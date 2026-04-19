@@ -6,6 +6,7 @@ using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Decorator;
 using BankingApp.Patterns.Structural.Proxy;
 using BankingApp.Services;
 using BankingApp.Utilities;
@@ -102,6 +103,17 @@ builder.Services.AddScoped<ITransactionValidator>(sp =>
 
 // Command Pattern #7 — TransactionCommandInvoker: execută comenzi și menține istoricul pentru rollback
 builder.Services.AddScoped<ITransactionCommandInvoker, TransactionCommandInvoker>();
+
+// Decorator Pattern #8 — lanț: Notification(Fee(Logging(BasicProcessor)))
+builder.Services.AddScoped<BasicTransactionProcessor>();
+builder.Services.AddScoped<ITransactionProcessor>(sp =>
+{
+    ITransactionProcessor processor = sp.GetRequiredService<BasicTransactionProcessor>();
+    processor = new LoggingTransactionDecorator(processor, sp.GetRequiredService<ILoggerService>());
+    processor = new FeeTransactionDecorator(processor, sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
+    processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
+    return processor;
+});
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
