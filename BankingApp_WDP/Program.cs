@@ -1,5 +1,6 @@
 using BankingApp.Data;
 using BankingApp.Models;
+using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
@@ -82,6 +83,21 @@ builder.Services.AddScoped<IAccountService>(sp => new AccountServiceProxy(
     sp.GetRequiredService<ILoggerService>(),
     sp.GetRequiredService<IHttpContextAccessor>()
 ));
+
+// Chain of Responsibility Pattern #6 — TransactionValidationChain: validatori înlănțuiți (status → sold → limită zilnică → fraud)
+builder.Services.AddScoped<AccountStatusValidator>();
+builder.Services.AddScoped<BalanceValidator>();
+builder.Services.AddScoped<DailyLimitValidator>();
+builder.Services.AddScoped<FraudDetectionValidator>();
+builder.Services.AddScoped<ITransactionValidator>(sp =>
+{
+    var accountStatus = sp.GetRequiredService<AccountStatusValidator>();
+    var balance       = sp.GetRequiredService<BalanceValidator>();
+    var dailyLimit    = sp.GetRequiredService<DailyLimitValidator>();
+    var fraud         = sp.GetRequiredService<FraudDetectionValidator>();
+    accountStatus.SetNext(balance).SetNext(dailyLimit).SetNext(fraud);
+    return accountStatus;
+});
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
