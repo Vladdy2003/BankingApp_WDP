@@ -185,6 +185,95 @@ public class CardsController : ControllerBase
         return Ok(CardResponse.FromCard(card));
     }
 
+    // POST /api/cards/{id}/validate-payment
+    [HttpPost("{id:int}/validate-payment")]
+    public async Task<IActionResult> ValidatePayment(int id, [FromBody] ValidatePaymentRequest request)
+    {
+        var card = await _db.Cards
+            .Include(c => c.Account)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (card == null)
+            return NotFound(new { message = "Cardul nu a fost găsit." });
+
+        if (card.Account.UserId != CurrentUserId)
+            return Forbid();
+
+        var today = DateTime.UtcNow.Date;
+        var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var dailySpent = await _db.Transactions
+            .Where(t => t.FromAccountId == card.AccountId
+                && t.CreatedAt >= today
+                && t.Status != TransactionStatus.Failed
+                && t.Status != TransactionStatus.Cancelled)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+
+        var monthlySpent = await _db.Transactions
+            .Where(t => t.FromAccountId == card.AccountId
+                && t.CreatedAt >= firstOfMonth
+                && t.Status != TransactionStatus.Failed
+                && t.Status != TransactionStatus.Cancelled)
+            .SumAsync(t => (decimal?)t.Amount) ?? 0m;
+
+        var remainingDaily = Math.Max(0, card.DailyLimit - dailySpent);
+        var remainingMonthly = Math.Max(0, card.MonthlyLimit - monthlySpent);
+
+        var baseResponse = new ValidatePaymentResponse
+        {
+            CardId = card.Id,
+            Amount = request.Amount,
+            Currency = request.Currency,
+            AvailableBalance = card.Account.Balance,
+            RemainingDailyLimit = remainingDaily,
+            RemainingMonthlyLimit = remainingMonthly
+        };
+
+        // Verificare 1: card neexpirat
+        if (card.ExpiryDate < DateTime.UtcNow)
+        {
+            baseResponse.IsAllowed = false;
+            baseResponse.Reason = "Cardul este expirat.";
+            return Ok(baseResponse);
+        }
+
+        // Verificare 2: card activ
+        if (card.Status != CardStatus.Active)
+        {
+            baseResponse.IsAllowed = false;
+            baseResponse.Reason = $"Cardul nu este activ (status curent: {card.Status}).";
+            return Ok(baseResponse);
+        }
+
+        // Verificare 3: fonduri suficiente
+        if (card.Account.Balance < request.Amount)
+        {
+            baseResponse.IsAllowed = false;
+            baseResponse.Reason = "Fonduri insuficiente în contul asociat cardului.";
+            return Ok(baseResponse);
+        }
+
+        // Verificare 4: limita zilnică
+        if (dailySpent + request.Amount > card.DailyLimit)
+        {
+            baseResponse.IsAllowed = false;
+            baseResponse.Reason = $"Limita zilnică a cardului ar fi depășită (disponibil: {remainingDaily:F2} {request.Currency}).";
+            return Ok(baseResponse);
+        }
+
+        // Verificare 5: limita lunară
+        if (monthlySpent + request.Amount > card.MonthlyLimit)
+        {
+            baseResponse.IsAllowed = false;
+            baseResponse.Reason = $"Limita lunară a cardului ar fi depășită (disponibil: {remainingMonthly:F2} {request.Currency}).";
+            return Ok(baseResponse);
+        }
+
+        baseResponse.IsAllowed = true;
+        _logger.LogInformation($"Validare plată aprobată: CardId={card.Id}, Amount={request.Amount} {request.Currency}");
+        return Ok(baseResponse);
+    }
+
     // DELETE /api/cards/{id}
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Cancel(int id)
