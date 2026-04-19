@@ -34,7 +34,7 @@ public class Transaction
     public decimal Amount { get; set; }
 
     [MaxLength(3)]
-    public string Currency { get; set; } = "RON";
+    public string Currency { get; set; } = "MDL";
 
     [Required]
     public TransactionType Type { get; set; }

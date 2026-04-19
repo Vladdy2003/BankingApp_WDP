@@ -43,5 +43,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Account>()
             .HasIndex(a => a.IBAN)
             .IsUnique();
+
+        // TPH: folosim coloana Type existentă ca discriminator
+        builder.Entity<Account>()
+            .HasDiscriminator(a => a.Type)
+            .HasValue<CurrentAccount>(AccountType.Current)
+            .HasValue<SavingsAccount>(AccountType.Savings)
+            .HasValue<BusinessAccount>(AccountType.Business);
     }
 }

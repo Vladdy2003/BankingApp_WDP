@@ -17,7 +17,7 @@ public enum AccountStatus
     Closed
 }
 
-public class Account
+public abstract class Account
 {
     public int Id { get; set; }
 
@@ -33,19 +33,7 @@ public class Account
     public decimal Balance { get; set; } = 0;
 
     [MaxLength(3)]
-    public string Currency { get; set; } = "RON";
-
-    // Current account specific
-    [Column(TypeName = "decimal(18,2)")]
-    public decimal OverdraftLimit { get; set; } = 0;
-
-    // Savings account specific
-    [Column(TypeName = "decimal(5,4)")]
-    public decimal InterestRate { get; set; } = 0;
-
-    // Business account specific
-    [MaxLength(200)]
-    public string? CompanyName { get; set; }
+    public string Currency { get; set; } = "MDL";
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
