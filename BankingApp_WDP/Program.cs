@@ -1,6 +1,7 @@
 using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Creational.AbstractFactory;
+using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Patterns.Structural.Proxy;
@@ -67,6 +68,9 @@ if (isDevelopment)
     builder.Services.AddScoped<INotificationFactory, MockNotificationFactory>();
 else
     builder.Services.AddScoped<INotificationFactory, ProductionNotificationFactory>();
+
+// Builder Pattern #5 — TransactionBuilder: construiește tranzacții pas cu pas cu validare per câmp
+builder.Services.AddTransient<ITransactionBuilder, TransactionBuilder>();
 
 // Proxy Pattern #4 — AccountServiceProxy wrappează AccountService adăugând permisiuni, caching și logging
 builder.Services.AddMemoryCache();
