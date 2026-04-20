@@ -2,6 +2,7 @@ using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Behavioral.Command;
+using BankingApp.Patterns.Behavioral.Observer;
 using BankingApp.Patterns.Behavioral.Strategy;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Builder;
@@ -105,6 +106,13 @@ builder.Services.AddScoped<ITransactionValidator>(sp =>
 
 // Command Pattern #7 — TransactionCommandInvoker: execută comenzi și menține istoricul pentru rollback
 builder.Services.AddScoped<ITransactionCommandInvoker, TransactionCommandInvoker>();
+
+// Observer Pattern #11 — TransactionEventPublisher notifică observatorii la fiecare tranzacție procesată
+builder.Services.AddScoped<ITransactionObserver, EmailNotificationObserver>();
+builder.Services.AddScoped<ITransactionObserver, SmsNotificationObserver>();
+builder.Services.AddScoped<ITransactionObserver, InAppNotificationObserver>();
+builder.Services.AddScoped<ITransactionObserver, AuditLogObserver>();
+builder.Services.AddScoped<ITransactionObservable, TransactionEventPublisher>();
 
 // Decorator Pattern #8 — lanț: Notification(Fee(Logging(BasicProcessor)))
 builder.Services.AddScoped<BasicTransactionProcessor>();

@@ -11,6 +11,8 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<Transaction> Transactions => Set<Transaction>();
     public DbSet<Card> Cards => Set<Card>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -43,6 +45,12 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Account>()
             .HasIndex(a => a.IBAN)
             .IsUnique();
+
+        builder.Entity<Notification>()
+            .HasOne(n => n.User)
+            .WithMany()
+            .HasForeignKey(n => n.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         // TPH: folosim coloana Type existentă ca discriminator
         builder.Entity<Account>()
