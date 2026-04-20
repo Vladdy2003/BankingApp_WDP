@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using BankingApp.DTOs.Auth;
 using BankingApp.Models;
+using BankingApp.Patterns.Creational.AbstractFactory;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
 
@@ -13,11 +14,19 @@ public class AuthService : IAuthService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IConfiguration _configuration;
+    private readonly INotificationFactory _notificationFactory;
+    private readonly IEmailTemplateService _emailTemplates;
 
-    public AuthService(UserManager<ApplicationUser> userManager, IConfiguration configuration)
+    public AuthService(
+        UserManager<ApplicationUser> userManager,
+        IConfiguration configuration,
+        INotificationFactory notificationFactory,
+        IEmailTemplateService emailTemplates)
     {
         _userManager = userManager;
         _configuration = configuration;
+        _notificationFactory = notificationFactory;
+        _emailTemplates = emailTemplates;
     }
 
     public async Task<AuthResponse> RegisterAsync(RegisterRequest request)
@@ -44,6 +53,10 @@ public class AuthService : IAuthService
             var errors = string.Join("; ", result.Errors.Select(e => e.Description));
             throw new InvalidOperationException($"Înregistrare eșuată: {errors}");
         }
+
+        var email = _notificationFactory.CreateEmailNotification();
+        var htmlBody = _emailTemplates.WelcomeEmail(user.FirstName, user.LastName, user.Email!);
+        await email.SendAsync(user.Email!, "Bun venit la BankingApp! 🏦", htmlBody);
 
         return await GenerateAuthResponseAsync(user);
     }

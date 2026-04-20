@@ -63,6 +63,7 @@ builder.Services.AddAuthentication(options =>
 // Servicii aplicație
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddSingleton<IEmailTemplateService, EmailTemplateService>();
 
 // Factory Method Pattern #2 — AccountFactory + IBANGenerator
 builder.Services.AddSingleton<IIBANGenerator, IBANGenerator>();
@@ -122,7 +123,7 @@ builder.Services.AddScoped<ITransactionProcessor>(sp =>
     ITransactionProcessor processor = sp.GetRequiredService<BasicTransactionProcessor>();
     processor = new LoggingTransactionDecorator(processor, sp.GetRequiredService<ILoggerService>());
     processor = new FeeTransactionDecorator(processor, sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
-    processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
+    processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<IEmailTemplateService>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
     return processor;
 });
 

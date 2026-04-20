@@ -1,24 +1,30 @@
+using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Singleton;
-using Microsoft.EntityFrameworkCore;
-using BankingApp.Data;
+using BankingApp.Services;
 
 namespace BankingApp.Patterns.Behavioral.Observer;
 
 /// <summary>
-/// Sends an email alert to the account owner when a transaction is completed.
-/// Uses AbstractFactory Pattern #3 to obtain the correct email implementation.
+/// Sends an HTML email alert to the account owner when a transaction is completed.
+/// Uses AbstractFactory Pattern #3 for the email implementation and IEmailTemplateService for the HTML body.
 /// </summary>
 public class EmailNotificationObserver : ITransactionObserver
 {
     private readonly INotificationFactory _notificationFactory;
+    private readonly IEmailTemplateService _emailTemplates;
     private readonly AppDbContext _db;
     private readonly ILoggerService _logger;
 
-    public EmailNotificationObserver(INotificationFactory notificationFactory, AppDbContext db, ILoggerService logger)
+    public EmailNotificationObserver(
+        INotificationFactory notificationFactory,
+        IEmailTemplateService emailTemplates,
+        AppDbContext db,
+        ILoggerService logger)
     {
         _notificationFactory = notificationFactory;
+        _emailTemplates = emailTemplates;
         _db = db;
         _logger = logger;
     }
@@ -36,12 +42,15 @@ public class EmailNotificationObserver : ITransactionObserver
 
         var email = _notificationFactory.CreateEmailNotification();
         var subject = $"Tranzacție {tx.Type} procesată — {tx.Amount:N2} {tx.Currency}";
-        var body = $"Bună, {user.FirstName}!\n\n" +
-                   $"Tranzacția #{tx.Id} de tip {tx.Type} în valoare de {tx.Amount:N2} {tx.Currency} " +
-                   $"a fost procesată cu succes la {tx.ProcessedAt:yyyy-MM-dd HH:mm} UTC.\n\n" +
-                   $"Dacă nu ai autorizat această operațiune, contactează-ne imediat.";
+        var htmlBody = _emailTemplates.TransactionEmail(
+            user.FirstName,
+            tx.Type.ToString(),
+            tx.Amount,
+            tx.Currency,
+            tx.Id,
+            tx.ProcessedAt);
 
-        await email.SendAsync(user.Email, subject, body);
-        _logger.LogInformation($"[Observer][Email] Email trimis utilizatorului {user.Email} pentru tranzacția #{tx.Id}.");
+        await email.SendAsync(user.Email, subject, htmlBody);
+        _logger.LogInformation($"[Observer][Email] Email HTML trimis la {user.Email} pentru tranzacția #{tx.Id}.");
     }
 }
