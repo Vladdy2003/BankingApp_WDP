@@ -1,22 +1,22 @@
 using System.Text.Json;
-using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Services;
 
 namespace BankingApp.Patterns.Behavioral.Observer;
 
 /// <summary>
-/// Records every completed transaction in the AuditLog table.
+/// Records every completed transaction in the AuditLog table via IAuditService.
 /// Provides full traceability of all financial operations.
 /// </summary>
 public class AuditLogObserver : ITransactionObserver
 {
-    private readonly AppDbContext _db;
+    private readonly IAuditService _auditService;
     private readonly ILoggerService _logger;
 
-    public AuditLogObserver(AppDbContext db, ILoggerService logger)
+    public AuditLogObserver(IAuditService auditService, ILoggerService logger)
     {
-        _db = db;
+        _auditService = auditService;
         _logger = logger;
     }
 
@@ -36,19 +36,13 @@ public class AuditLogObserver : ITransactionObserver
             tx.ProcessedAt
         });
 
-        var auditEntry = new AuditLog
-        {
-            UserId = evt.InitiatorUserId,
-            Action = $"Transaction.{tx.Type}",
-            EntityType = nameof(Transaction),
-            EntityId = tx.Id.ToString(),
-            NewValues = newValues,
-            Timestamp = evt.OccurredAt
-        };
+        await _auditService.LogAsync(
+            action: $"Transaction.{tx.Type}",
+            userId: evt.InitiatorUserId,
+            entityType: nameof(Transaction),
+            entityId: tx.Id.ToString(),
+            newValues: newValues);
 
-        _db.AuditLogs.Add(auditEntry);
-        await _db.SaveChangesAsync();
-
-        _logger.LogInformation($"[Observer][Audit] Înregistrat în audit log: {auditEntry.Action} pentru tranzacția #{tx.Id}.");
+        _logger.LogInformation($"[Observer][Audit] Înregistrat în audit log: Transaction.{tx.Type} pentru tranzacția #{tx.Id}.");
     }
 }

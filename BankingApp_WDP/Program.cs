@@ -62,6 +62,7 @@ builder.Services.AddAuthentication(options =>
 
 // Servicii aplicație
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IAuditService, AuditService>();
 
 // Factory Method Pattern #2 — AccountFactory + IBANGenerator
 builder.Services.AddSingleton<IIBANGenerator, IBANGenerator>();
