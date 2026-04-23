@@ -1,6 +1,7 @@
 using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
+using QuestPDF.Infrastructure;
 using BankingApp.Patterns.Behavioral.State;
 using BankingApp.Patterns.Behavioral.Command;
 using BankingApp.Patterns.Behavioral.Observer;
@@ -21,6 +22,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -155,6 +158,11 @@ builder.Services.AddScoped<IReportService, ReportService>();
 
 // Facade Pattern #12 — BankingFacade: interfață unificată peste AccountService, Command, Chain, Observer
 builder.Services.AddScoped<IBankingFacade, BankingFacade>();
+
+// Step 6.4 — ExportService: Strategy Pattern pentru export CSV și PDF al extraselor de cont
+builder.Services.AddScoped<IExportStrategy, CsvExportStrategy>();
+builder.Services.AddScoped<IExportStrategy, PdfExportStrategy>();
+builder.Services.AddScoped<IExportService, ExportService>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
