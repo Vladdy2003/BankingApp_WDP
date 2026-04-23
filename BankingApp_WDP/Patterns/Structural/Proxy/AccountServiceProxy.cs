@@ -142,12 +142,56 @@ public class AccountServiceProxy : IAccountService
         return result;
     }
 
+    public async Task<bool> SuspendAsync(int accountId)
+    {
+        _logger.LogInformation($"[Proxy] SuspendAsync — accountId={accountId}, caller={CurrentUserId}");
+
+        var account = await _inner.GetByIdAsync(accountId);
+        if (account != null) EnsureAccess(account, accountId);
+
+        var result = await _inner.SuspendAsync(accountId);
+        if (result)
+        {
+            InvalidateAccountCache(accountId, account);
+            _logger.LogInformation($"[Proxy] Cont suspendat — accountId={accountId}");
+        }
+
+        return result;
+    }
+
+    public async Task<bool> ActivateAsync(int accountId)
+    {
+        _logger.LogInformation($"[Proxy] ActivateAsync — accountId={accountId}, caller={CurrentUserId}");
+
+        var account = await _inner.GetByIdAsync(accountId);
+        if (account != null) EnsureAccess(account, accountId);
+
+        var result = await _inner.ActivateAsync(accountId);
+        if (result)
+        {
+            InvalidateAccountCache(accountId, account);
+            _logger.LogInformation($"[Proxy] Cont reactivat — accountId={accountId}");
+        }
+
+        return result;
+    }
+
     private void EnsureAccess(Account? account, int accountId)
     {
         if (account == null) return;
-        if (CurrentUserId == null) return; // contexte non-HTTP (job-uri de fundal)
+        if (CurrentUserId == null) return;
         if (account.UserId != CurrentUserId)
             throw new UnauthorizedAccessException($"Acces refuzat la contul {accountId}.");
+    }
+
+    private void InvalidateAccountCache(int accountId, Account? account)
+    {
+        _cache.Remove($"account:{accountId}");
+        if (account != null)
+        {
+            _cache.Remove($"account:iban:{account.IBAN}");
+            InvalidateUserCache(account.UserId);
+        }
     }
 
     private void InvalidateUserCache(string userId)

@@ -10,4 +10,6 @@ public interface IAccountService
     Task<Account> UpdateAsync(Account account);
     Task<Account?> GetByIBANAsync(string iban);
     Task<bool> CloseAsync(int accountId);
+    Task<bool> SuspendAsync(int accountId);
+    Task<bool> ActivateAsync(int accountId);
 }

@@ -1,6 +1,7 @@
 using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
+using BankingApp.Patterns.Behavioral.State;
 using BankingApp.Patterns.Behavioral.Command;
 using BankingApp.Patterns.Behavioral.Observer;
 using BankingApp.Patterns.Behavioral.Strategy;
@@ -140,6 +141,14 @@ builder.Services.AddScoped<SimpleInterestStrategy>();
 builder.Services.AddScoped<CompoundInterestStrategy>();
 builder.Services.AddScoped<NoInterestStrategy>();
 builder.Services.AddScoped<IInterestService, InterestService>();
+
+// State Pattern #13 — stările concrete ale contului; AccountStateContext e static, fără înregistrare DI
+// Stările Active, Suspended, Inactive, Closed sunt instanțiate la cerere prin AccountStateContext.Resolve()
+// Folosit în: AccountService (tranziții), AccountStatusValidator (guard per operație), AccountsController (suspend/activate)
+_ = typeof(ActiveAccountState);     // referință pentru a păstra assembly-ul în build
+_ = typeof(SuspendedAccountState);
+_ = typeof(InactiveAccountState);
+_ = typeof(ClosedAccountState);
 
 // Step 6.2 — ReportService: rapoarte financiare (extras lunar, sumar anual, cheltuieli, venituri vs cheltuieli)
 builder.Services.AddScoped<IReportService, ReportService>();

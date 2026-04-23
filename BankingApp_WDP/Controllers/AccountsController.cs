@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using BankingApp.DTOs.Accounts;
 using BankingApp.Models;
+using BankingApp.Patterns.Behavioral.State;
 using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Services;
@@ -96,8 +97,10 @@ public class AccountsController : ControllerBase
         {
             var account = await _accountService.GetByIdAsync(id);
             if (account == null) return NotFound(new { message = "Contul nu a fost găsit." });
-            if (account.Status == AccountStatus.Closed)
-                return BadRequest(new { message = "Nu se poate actualiza un cont închis." });
+
+            // State Pattern #13 — validăm că actualizarea e permisă în starea curentă
+            var state = AccountStateContext.Resolve(account.Status);
+            state.GuardDeposit(account); // dacă e Closed aruncă excepție
 
             if (request.Currency != null)
                 account.Currency = request.Currency;
@@ -113,6 +116,10 @@ public class AccountsController : ControllerBase
 
             var updated = await _accountService.UpdateAsync(account);
             return Ok(AccountResponse.FromAccount(updated));
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (UnauthorizedAccessException ex)
         {
@@ -135,6 +142,52 @@ public class AccountsController : ControllerBase
             if (!closed) return NotFound(new { message = "Contul nu a fost găsit." });
 
             return NoContent();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    // PUT /api/accounts/{id}/suspend — State Pattern #13: Active → Suspended
+    [HttpPut("{id:int}/suspend")]
+    public async Task<IActionResult> Suspend(int id)
+    {
+        try
+        {
+            var result = await _accountService.SuspendAsync(id);
+            if (!result) return NotFound(new { message = "Contul nu a fost găsit." });
+
+            return Ok(new { message = "Contul a fost suspendat cu succes." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            return Forbid(ex.Message);
+        }
+    }
+
+    // PUT /api/accounts/{id}/activate — State Pattern #13: Suspended/Inactive → Active
+    [HttpPut("{id:int}/activate")]
+    public async Task<IActionResult> Activate(int id)
+    {
+        try
+        {
+            var result = await _accountService.ActivateAsync(id);
+            if (!result) return NotFound(new { message = "Contul nu a fost găsit." });
+
+            return Ok(new { message = "Contul a fost reactivat cu succes." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
         }
         catch (UnauthorizedAccessException ex)
         {
