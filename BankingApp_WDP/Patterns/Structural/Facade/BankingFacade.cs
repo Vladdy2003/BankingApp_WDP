@@ -19,19 +19,22 @@ public class BankingFacade : IBankingFacade
     private readonly ITransactionCommandInvoker _invoker;
     private readonly ITransactionValidator _validator;
     private readonly ILoggerService _logger;
+    private readonly IReportService _reportService;
 
     public BankingFacade(
         AppDbContext db,
         IAccountService accountService,
         ITransactionCommandInvoker invoker,
         ITransactionValidator validator,
-        ILoggerService logger)
+        ILoggerService logger,
+        IReportService reportService)
     {
         _db = db;
         _accountService = accountService;
         _invoker = invoker;
         _validator = validator;
         _logger = logger;
+        _reportService = reportService;
     }
 
     // --- GetAccountSummary ---
@@ -140,79 +143,10 @@ public class BankingFacade : IBankingFacade
     }
 
     // --- GenerateMonthlyReport ---
-    // Construiește extrasul lunar al unui cont: credite, debite, sold deschidere/închidere.
-    public async Task<MonthlyReportDto> GenerateMonthlyReportAsync(int accountId, int year, int month)
+    // Deleghează la IReportService (pasul 6.2) pentru a evita duplicarea logicii.
+    public Task<MonthlyReportDto> GenerateMonthlyReportAsync(int accountId, int year, int month)
     {
-        _logger.LogInformation($"[Facade] GenerateMonthlyReport: contId={accountId}, {year}/{month:D2}");
-
-        var account = await _accountService.GetByIdAsync(accountId)
-            ?? throw new InvalidOperationException($"Contul #{accountId} nu a fost găsit.");
-
-        var periodStart = new DateTime(year, month, 1, 0, 0, 0, DateTimeKind.Utc);
-        var periodEnd   = periodStart.AddMonths(1);
-
-        var transactions = await _db.Transactions
-            .Where(t =>
-                (t.FromAccountId == accountId || t.ToAccountId == accountId) &&
-                t.CreatedAt >= periodStart &&
-                t.CreatedAt <  periodEnd   &&
-                t.Status != TransactionStatus.Cancelled &&
-                t.Status != TransactionStatus.Failed)
-            .OrderBy(t => t.CreatedAt)
-            .ToListAsync();
-
-        decimal totalCredits = 0m;
-        decimal totalDebits  = 0m;
-        decimal totalFees    = 0m;
-
-        var lineItems = new List<TransactionLineItem>();
-        foreach (var tx in transactions)
-        {
-            bool isCredit = tx.ToAccountId == accountId;
-            bool isFee    = tx.Type == TransactionType.Payment &&
-                            tx.Description?.StartsWith("Comision") == true;
-
-            if (isFee)
-                totalFees += tx.Amount;
-            else if (isCredit)
-                totalCredits += tx.Amount;
-            else
-                totalDebits += tx.Amount;
-
-            lineItems.Add(new TransactionLineItem
-            {
-                Id = tx.Id,
-                Date = tx.CreatedAt,
-                Type = tx.Type.ToString(),
-                Description = tx.Description,
-                Amount = tx.Amount,
-                Currency = tx.Currency,
-                Status = tx.Status.ToString(),
-                Direction = isCredit ? "Credit" : "Debit"
-            });
-        }
-
-        // Sold la deschidere = sold curent − credite + debite + comisioane din perioadă
-        decimal closingBalance = account.Balance;
-        decimal openingBalance = closingBalance - totalCredits + totalDebits + totalFees;
-
-        var report = new MonthlyReportDto
-        {
-            AccountId        = accountId,
-            IBAN             = account.IBAN,
-            Currency         = account.Currency,
-            Year             = year,
-            Month            = month,
-            OpeningBalance   = openingBalance,
-            ClosingBalance   = closingBalance,
-            TotalCredits     = totalCredits,
-            TotalDebits      = totalDebits,
-            TotalFees        = totalFees,
-            TransactionCount = transactions.Count,
-            Transactions     = lineItems
-        };
-
-        _logger.LogInformation($"[Facade] Raport generat: {transactions.Count} tranzacții, credite={totalCredits}, debite={totalDebits}.");
-        return report;
+        _logger.LogInformation($"[Facade] GenerateMonthlyReport → ReportService: contId={accountId}, {year}/{month:D2}");
+        return _reportService.GetMonthlyStatementAsync(accountId, year, month);
     }
 }

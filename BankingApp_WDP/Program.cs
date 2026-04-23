@@ -141,6 +141,9 @@ builder.Services.AddScoped<CompoundInterestStrategy>();
 builder.Services.AddScoped<NoInterestStrategy>();
 builder.Services.AddScoped<IInterestService, InterestService>();
 
+// Step 6.2 — ReportService: rapoarte financiare (extras lunar, sumar anual, cheltuieli, venituri vs cheltuieli)
+builder.Services.AddScoped<IReportService, ReportService>();
+
 // Facade Pattern #12 — BankingFacade: interfață unificată peste AccountService, Command, Chain, Observer
 builder.Services.AddScoped<IBankingFacade, BankingFacade>();
 
