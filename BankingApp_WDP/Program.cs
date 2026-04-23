@@ -10,6 +10,7 @@ using BankingApp.Patterns.Creational.FactoryMethod;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Patterns.Structural.Decorator;
 using BankingApp.Patterns.Creational.Prototype;
+using BankingApp.Patterns.Structural.Facade;
 using BankingApp.Patterns.Structural.Proxy;
 using BankingApp.Services;
 using BankingApp.Utilities;
@@ -139,6 +140,9 @@ builder.Services.AddScoped<SimpleInterestStrategy>();
 builder.Services.AddScoped<CompoundInterestStrategy>();
 builder.Services.AddScoped<NoInterestStrategy>();
 builder.Services.AddScoped<IInterestService, InterestService>();
+
+// Facade Pattern #12 — BankingFacade: interfață unificată peste AccountService, Command, Chain, Observer
+builder.Services.AddScoped<IBankingFacade, BankingFacade>();
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
