@@ -70,7 +70,9 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.Main.route) {
-            DashboardScreen()
+            DashboardScreen(
+                onNavigateToNotifications = { /* C.3 — neimplementat */ }
+            )
         }
     }
 }
