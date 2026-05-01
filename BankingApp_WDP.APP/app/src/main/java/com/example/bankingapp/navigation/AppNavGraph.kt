@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.bankingapp.ui.screens.dashboard.DashboardScreen
 import com.example.bankingapp.ui.screens.login.LoginScreen
+import com.example.bankingapp.ui.screens.notifications.NotificationsScreen
 import com.example.bankingapp.ui.screens.register.RegisterScreen
 import com.example.bankingapp.ui.screens.splash.SplashScreen
 
@@ -44,8 +45,8 @@ fun AppNavGraph(navController: NavHostController) {
         ) { backStackEntry ->
             val prefillEmail = backStackEntry.arguments?.getString(Screen.Login.argEmail) ?: ""
             LoginScreen(
-                initialEmail        = prefillEmail,
-                onNavigateToMain    = {
+                initialEmail         = prefillEmail,
+                onNavigateToMain     = {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
@@ -71,7 +72,15 @@ fun AppNavGraph(navController: NavHostController) {
 
         composable(Screen.Main.route) {
             DashboardScreen(
-                onNavigateToNotifications = { /* C.3 — neimplementat */ }
+                onNavigateToNotifications = {
+                    navController.navigate(Screen.Notifications.route)
+                }
+            )
+        }
+
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }
