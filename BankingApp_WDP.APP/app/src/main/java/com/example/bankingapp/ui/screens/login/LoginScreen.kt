@@ -40,11 +40,16 @@ import androidx.compose.foundation.isSystemInDarkTheme
 @Composable
 fun LoginScreen(
     onNavigateToMain: () -> Unit,
-    onNavigateToRegister: () -> Unit = {}
+    onNavigateToRegister: () -> Unit = {},
+    initialEmail: String = ""
 ) {
     val vm: LoginViewModel = viewModel()
     val uiState by vm.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(initialEmail) {
+        if (initialEmail.isNotEmpty()) vm.onEmailChange(initialEmail)
+    }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
