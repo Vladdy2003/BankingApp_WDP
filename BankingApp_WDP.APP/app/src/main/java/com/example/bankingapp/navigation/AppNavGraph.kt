@@ -34,6 +34,9 @@ fun AppNavGraph(navController: NavHostController) {
                     navController.navigate(Screen.Main.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(Screen.Register.route)
                 }
             )
         }

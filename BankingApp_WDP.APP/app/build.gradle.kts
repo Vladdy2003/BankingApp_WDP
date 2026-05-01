@@ -57,6 +57,14 @@ dependencies {
     implementation(libs.androidx.datastore.preferences)
     // Google Fonts (DM Serif Display, DM Sans, DM Mono)
     implementation(libs.androidx.compose.ui.google.fonts)
+    // Material Icons Extended (Visibility, VisibilityOff, etc.)
+    implementation(libs.androidx.compose.material.icons)
+    // Networking — Retrofit + OkHttp + Gson
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.gson)
+    implementation(libs.okhttp)
+    implementation(libs.okhttp.logging)
+    implementation(libs.gson)
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(platform(libs.androidx.compose.bom))
