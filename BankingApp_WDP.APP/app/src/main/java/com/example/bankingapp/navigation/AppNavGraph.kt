@@ -1,6 +1,11 @@
 package com.example.bankingapp.navigation
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -78,6 +83,9 @@ fun AppNavGraph(navController: NavHostController) {
                 },
                 onNavigateToAccountDetail = { accountId ->
                     navController.navigate(Screen.AccountDetail.navRoute(accountId))
+                },
+                onNavigateToCardDetail = { cardId ->
+                    navController.navigate(Screen.CardDetail.navRoute(cardId))
                 }
             )
         }
@@ -102,6 +110,23 @@ fun AppNavGraph(navController: NavHostController) {
                 accountId       = accountId,
                 onNavigateBack  = { navController.popBackStack() }
             )
+        }
+
+        composable(
+            route     = Screen.CardDetail.route,
+            arguments = listOf(
+                navArgument(Screen.CardDetail.argCardId) {
+                    type = NavType.StringType
+                }
+            )
+        ) { _ ->
+            // C.5.2 CardDetailScreen — va fi implementat ulterior
+            Box(
+                modifier         = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("Card Detail — în curând")
+            }
         }
     }
 }

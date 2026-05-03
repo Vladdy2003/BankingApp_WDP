@@ -21,13 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.consumeWindowInsets
 import com.example.bankingapp.navigation.BottomNavItem
 import com.example.bankingapp.ui.screens.accounts.AccountsListScreen
+import com.example.bankingapp.ui.screens.cards.CardsListScreen
 import com.example.bankingapp.ui.screens.dashboard.DashboardScreen
 import com.example.bankingapp.ui.theme.BaGold
 
 @Composable
 fun MainScreen(
     onNavigateToNotifications: () -> Unit,
-    onNavigateToAccountDetail: (String) -> Unit
+    onNavigateToAccountDetail: (String) -> Unit,
+    onNavigateToCardDetail: (String) -> Unit = {}
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(BottomNavItem.Dashboard.route) }
 
@@ -84,6 +86,9 @@ fun MainScreen(
                 )
                 BottomNavItem.Accounts.route -> AccountsListScreen(
                     onNavigateToAccountDetail = onNavigateToAccountDetail
+                )
+                BottomNavItem.Cards.route -> CardsListScreen(
+                    onNavigateToCardDetail = onNavigateToCardDetail
                 )
                 else -> PlaceholderTab(
                     label = tabs.first { it.route == selectedTab }.label
