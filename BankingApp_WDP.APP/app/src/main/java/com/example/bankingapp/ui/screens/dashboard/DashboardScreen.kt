@@ -64,6 +64,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -343,11 +344,7 @@ private fun AccountsSection(accounts: List<AccountResponse>, isDark: Boolean) {
 
 @Composable
 private fun AccountCard(account: AccountResponse, isDark: Boolean) {
-    val gradient = Brush.linearGradient(
-        colors = listOf(BaObsidian, if (isDark) BaDarkSurface else Color(0xFF2A2620)),
-        start  = Offset(0f, 0f),
-        end    = Offset(Float.MAX_VALUE, Float.MAX_VALUE)
-    )
+    val gradientColors = listOf(BaObsidian, if (isDark) BaDarkSurface else Color(0xFF2A2620))
     val accentColor = if (isDark) BaGoldDark else BaGold
 
     Box(
@@ -355,7 +352,15 @@ private fun AccountCard(account: AccountResponse, isDark: Boolean) {
             .fillMaxWidth()
             .height(160.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(brush = gradient)
+            .drawBehind {
+                drawRect(
+                    brush = Brush.linearGradient(
+                        colors = gradientColors,
+                        start  = Offset.Zero,
+                        end    = Offset(size.width, size.height)
+                    )
+                )
+            }
             .border(
                 width = 0.5.dp,
                 color = accentColor.copy(alpha = 0.5f),
@@ -483,11 +488,6 @@ private fun CardsSection(cards: List<CardResponse>, isDark: Boolean) {
 @Composable
 private fun BankCardMini(card: CardResponse, isDark: Boolean) {
     val accentColor = if (isDark) BaGoldDark else BaGold
-    val gradient = Brush.linearGradient(
-        colors = listOf(BaObsidian, Color(0xFF1C1A16)),
-        start  = Offset(0f, 0f),
-        end    = Offset(Float.MAX_VALUE, 0f)
-    )
     val isBlocked = card.status.equals("Blocked", ignoreCase = true)
 
     Box(
@@ -495,7 +495,7 @@ private fun BankCardMini(card: CardResponse, isDark: Boolean) {
             .fillMaxWidth()
             .height(95.dp)
             .clip(RoundedCornerShape(16.dp))
-            .background(brush = gradient)
+            .background(Brush.horizontalGradient(listOf(BaObsidian, Color(0xFF1C1A16))))
             .border(
                 width = 0.5.dp,
                 color = accentColor.copy(alpha = 0.3f),

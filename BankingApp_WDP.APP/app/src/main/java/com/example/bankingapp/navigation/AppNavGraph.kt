@@ -6,8 +6,9 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.bankingapp.ui.screens.dashboard.DashboardScreen
+import com.example.bankingapp.ui.screens.accounts.AccountDetailScreen
 import com.example.bankingapp.ui.screens.login.LoginScreen
+import com.example.bankingapp.ui.screens.main.MainScreen
 import com.example.bankingapp.ui.screens.notifications.NotificationsScreen
 import com.example.bankingapp.ui.screens.register.RegisterScreen
 import com.example.bankingapp.ui.screens.splash.SplashScreen
@@ -71,9 +72,12 @@ fun AppNavGraph(navController: NavHostController) {
         }
 
         composable(Screen.Main.route) {
-            DashboardScreen(
+            MainScreen(
                 onNavigateToNotifications = {
                     navController.navigate(Screen.Notifications.route)
+                },
+                onNavigateToAccountDetail = { accountId ->
+                    navController.navigate(Screen.AccountDetail.navRoute(accountId))
                 }
             )
         }
@@ -81,6 +85,22 @@ fun AppNavGraph(navController: NavHostController) {
         composable(Screen.Notifications.route) {
             NotificationsScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(
+            route     = Screen.AccountDetail.route,
+            arguments = listOf(
+                navArgument(Screen.AccountDetail.argAccountId) {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val accountId = backStackEntry.arguments
+                ?.getString(Screen.AccountDetail.argAccountId) ?: ""
+            AccountDetailScreen(
+                accountId       = accountId,
+                onNavigateBack  = { navController.popBackStack() }
             )
         }
     }

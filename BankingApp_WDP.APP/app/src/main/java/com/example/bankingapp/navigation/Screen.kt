@@ -11,4 +11,8 @@ sealed class Screen(val route: String) {
     object Register       : Screen("register")
     object Main           : Screen("main")
     object Notifications  : Screen("notifications")
+    object AccountDetail  : Screen("account_detail/{accountId}") {
+        const val argAccountId = "accountId"
+        fun navRoute(accountId: String) = "account_detail/$accountId"
+    }
 }
