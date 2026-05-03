@@ -1,17 +1,13 @@
 package com.example.bankingapp.navigation
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.bankingapp.ui.screens.accounts.AccountDetailScreen
+import com.example.bankingapp.ui.screens.cards.CardDetailScreen
 import com.example.bankingapp.ui.screens.login.LoginScreen
 import com.example.bankingapp.ui.screens.main.MainScreen
 import com.example.bankingapp.ui.screens.notifications.NotificationsScreen
@@ -119,14 +115,15 @@ fun AppNavGraph(navController: NavHostController) {
                     type = NavType.StringType
                 }
             )
-        ) { _ ->
-            // C.5.2 CardDetailScreen — va fi implementat ulterior
-            Box(
-                modifier         = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Text("Card Detail — în curând")
-            }
+        ) { backStackEntry ->
+            val cardId = backStackEntry.arguments?.getString(Screen.CardDetail.argCardId) ?: ""
+            CardDetailScreen(
+                cardId                   = cardId,
+                onNavigateBack           = { navController.popBackStack() },
+                onNavigateToAccountDetail = { accountId ->
+                    navController.navigate(Screen.AccountDetail.navRoute(accountId))
+                }
+            )
         }
     }
 }
