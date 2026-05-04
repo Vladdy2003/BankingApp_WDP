@@ -19,6 +19,9 @@ class TokenManager(private val context: Context) {
         val KEY_FULL_NAME     = stringPreferencesKey("full_name")
         val KEY_EMAIL         = stringPreferencesKey("email")
         val KEY_USER_ID       = stringPreferencesKey("user_id")
+        val KEY_PHONE         = stringPreferencesKey("phone")
+        val KEY_ADDRESS       = stringPreferencesKey("address")
+        val KEY_DATE_OF_BIRTH = stringPreferencesKey("date_of_birth")
     }
 
     suspend fun saveTokens(accessToken: String, refreshToken: String) {
@@ -44,6 +47,30 @@ class TokenManager(private val context: Context) {
 
     suspend fun getFullName(): String? =
         context.dataStore.data.map { it[KEY_FULL_NAME] }.first()
+
+    suspend fun getEmail(): String? =
+        context.dataStore.data.map { it[KEY_EMAIL] }.first()
+
+    suspend fun getUserId(): String? =
+        context.dataStore.data.map { it[KEY_USER_ID] }.first()
+
+    suspend fun getPhone(): String? =
+        context.dataStore.data.map { it[KEY_PHONE] }.first()
+
+    suspend fun getAddress(): String? =
+        context.dataStore.data.map { it[KEY_ADDRESS] }.first()
+
+    suspend fun getDateOfBirth(): String? =
+        context.dataStore.data.map { it[KEY_DATE_OF_BIRTH] }.first()
+
+    suspend fun saveProfileInfo(fullName: String, phone: String, address: String, dateOfBirth: String) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_FULL_NAME]     = fullName
+            prefs[KEY_PHONE]         = phone
+            prefs[KEY_ADDRESS]       = address
+            prefs[KEY_DATE_OF_BIRTH] = dateOfBirth
+        }
+    }
 
     suspend fun clear() {
         context.dataStore.edit { it.clear() }

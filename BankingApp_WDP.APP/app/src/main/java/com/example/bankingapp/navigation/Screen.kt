@@ -19,4 +19,5 @@ sealed class Screen(val route: String) {
         const val argCardId = "cardId"
         fun navRoute(cardId: String) = "card_detail/$cardId"
     }
+    object Profile        : Screen("profile")
 }

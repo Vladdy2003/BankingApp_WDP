@@ -2,7 +2,6 @@ package com.example.bankingapp.ui.screens.main
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -16,13 +15,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.consumeWindowInsets
 import com.example.bankingapp.navigation.BottomNavItem
 import com.example.bankingapp.ui.screens.accounts.AccountsListScreen
 import com.example.bankingapp.ui.screens.cards.CardsListScreen
 import com.example.bankingapp.ui.screens.dashboard.DashboardScreen
+import com.example.bankingapp.ui.screens.settings.SettingsScreen
 import com.example.bankingapp.ui.screens.transactions.TransactionsListScreen
 import com.example.bankingapp.ui.theme.BaGold
 
@@ -30,7 +29,11 @@ import com.example.bankingapp.ui.theme.BaGold
 fun MainScreen(
     onNavigateToNotifications: () -> Unit,
     onNavigateToAccountDetail: (String) -> Unit,
-    onNavigateToCardDetail: (String) -> Unit = {}
+    onNavigateToCardDetail: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    isDarkTheme: Boolean,
+    onToggleDarkTheme: () -> Unit
 ) {
     var selectedTab by rememberSaveable { mutableStateOf(BottomNavItem.Dashboard.route) }
 
@@ -83,7 +86,8 @@ fun MainScreen(
         ) {
             when (selectedTab) {
                 BottomNavItem.Dashboard.route -> DashboardScreen(
-                    onNavigateToNotifications = onNavigateToNotifications
+                    onNavigateToNotifications = onNavigateToNotifications,
+                    onNavigateToAccountDetail = onNavigateToAccountDetail
                 )
                 BottomNavItem.Accounts.route -> AccountsListScreen(
                     onNavigateToAccountDetail = onNavigateToAccountDetail
@@ -92,24 +96,13 @@ fun MainScreen(
                     onNavigateToCardDetail = onNavigateToCardDetail
                 )
                 BottomNavItem.Transactions.route -> TransactionsListScreen()
-                else -> PlaceholderTab(
-                    label = tabs.first { it.route == selectedTab }.label
+                BottomNavItem.Settings.route -> SettingsScreen(
+                    onNavigateToProfile = onNavigateToProfile,
+                    onNavigateToLogin   = onNavigateToLogin,
+                    isDarkTheme         = isDarkTheme,
+                    onToggleDarkTheme   = onToggleDarkTheme
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun PlaceholderTab(label: String) {
-    Box(
-        modifier          = Modifier.fillMaxSize(),
-        contentAlignment  = Alignment.Center
-    ) {
-        Text(
-            text  = "$label — în curând",
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
     }
 }

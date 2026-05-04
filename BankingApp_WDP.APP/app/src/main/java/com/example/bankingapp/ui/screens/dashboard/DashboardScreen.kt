@@ -144,11 +144,17 @@ private val monthNames = listOf("Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
 @Composable
 fun DashboardScreen(
     onNavigateToNotifications: () -> Unit = {},
+    onNavigateToAccountDetail: (String) -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val isDark = isSystemInDarkTheme()
+
+    // Refresh de fiecare dată când ecranul intră în compoziție (switch tab sau revenire din detalii)
+    LaunchedEffect(Unit) {
+        viewModel.refreshOnResume()
+    }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
@@ -249,8 +255,9 @@ fun DashboardScreen(
                 item {
                     AnimatedSection(visible = revealStep >= 1) {
                         AccountsSection(
-                            accounts = uiState.accounts,
-                            isDark   = isDark
+                            accounts                = uiState.accounts,
+                            isDark                  = isDark,
+                            onNavigateToAccountDetail = onNavigateToAccountDetail
                         )
                     }
                 }
@@ -305,7 +312,11 @@ private fun AnimatedSection(visible: Boolean, content: @Composable () -> Unit) {
 // ── Block 1: Carousel Conturi ─────────────────────────────────────────────────
 
 @Composable
-private fun AccountsSection(accounts: List<AccountResponse>, isDark: Boolean) {
+private fun AccountsSection(
+    accounts: List<AccountResponse>,
+    isDark: Boolean,
+    onNavigateToAccountDetail: (String) -> Unit = {}
+) {
     Column(modifier = Modifier.padding(top = 8.dp)) {
         SectionEyebrow(
             text     = "CONTURILE MELE",
@@ -325,7 +336,11 @@ private fun AccountsSection(accounts: List<AccountResponse>, isDark: Boolean) {
                 pageSpacing      = 12.dp,
                 modifier         = Modifier.fillMaxWidth()
             ) { page ->
-                AccountCard(account = accounts[page], isDark = isDark)
+                AccountCard(
+                    account = accounts[page],
+                    isDark  = isDark,
+                    onClick = { onNavigateToAccountDetail(accounts[page].id) }
+                )
             }
             if (accounts.size > 1) {
                 PagerDots(
@@ -343,7 +358,11 @@ private fun AccountsSection(accounts: List<AccountResponse>, isDark: Boolean) {
 }
 
 @Composable
-private fun AccountCard(account: AccountResponse, isDark: Boolean) {
+private fun AccountCard(
+    account: AccountResponse,
+    isDark: Boolean,
+    onClick: () -> Unit = {}
+) {
     val gradientColors = listOf(BaObsidian, if (isDark) BaDarkSurface else Color(0xFF2A2620))
     val accentColor = if (isDark) BaGoldDark else BaGold
 
@@ -352,6 +371,7 @@ private fun AccountCard(account: AccountResponse, isDark: Boolean) {
             .fillMaxWidth()
             .height(160.dp)
             .clip(RoundedCornerShape(24.dp))
+            .clickable(onClick = onClick)
             .drawBehind {
                 drawRect(
                     brush = Brush.linearGradient(

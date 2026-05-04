@@ -12,10 +12,15 @@ import com.example.bankingapp.ui.screens.login.LoginScreen
 import com.example.bankingapp.ui.screens.main.MainScreen
 import com.example.bankingapp.ui.screens.notifications.NotificationsScreen
 import com.example.bankingapp.ui.screens.register.RegisterScreen
+import com.example.bankingapp.ui.screens.settings.ProfileScreen
 import com.example.bankingapp.ui.screens.splash.SplashScreen
 
 @Composable
-fun AppNavGraph(navController: NavHostController) {
+fun AppNavGraph(
+    navController: NavHostController,
+    isDarkTheme: Boolean,
+    onToggleDarkTheme: () -> Unit
+) {
     NavHost(
         navController    = navController,
         startDestination = Screen.Splash.route
@@ -82,7 +87,17 @@ fun AppNavGraph(navController: NavHostController) {
                 },
                 onNavigateToCardDetail = { cardId ->
                     navController.navigate(Screen.CardDetail.navRoute(cardId))
-                }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route)
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.navRoute()) {
+                        popUpTo(0) { inclusive = true }
+                    }
+                },
+                isDarkTheme       = isDarkTheme,
+                onToggleDarkTheme = onToggleDarkTheme
             )
         }
 
@@ -123,6 +138,12 @@ fun AppNavGraph(navController: NavHostController) {
                 onNavigateToAccountDetail = { accountId ->
                     navController.navigate(Screen.AccountDetail.navRoute(accountId))
                 }
+            )
+        }
+
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

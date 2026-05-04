@@ -38,8 +38,18 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(DashboardUiState())
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    // Flag pentru a distinge prima încărcare (init) de re-intrarea în tab
+    private var initialLoadDone = false
+
     init {
         loadData()
+    }
+
+    /** Apelat de DashboardScreen la fiecare intrare în compoziție.
+     *  Declanșează refresh NUMAI dacă datele au fost deja încărcate cel puțin odată,
+     *  pentru a evita dubla-cerere la pornire. */
+    fun refreshOnResume() {
+        if (initialLoadDone) refresh()
     }
 
     fun refresh() {
@@ -91,6 +101,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                         unreadNotificationCount = unreadCount
                     )
                 }
+                initialLoadDone = true
             } catch (e: Exception) {
                 val message = when (e) {
                     is java.io.IOException -> "Fără conexiune la internet."
@@ -102,6 +113,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
                     else -> "A apărut o eroare neașteptată."
                 }
                 _uiState.update { it.copy(isLoading = false, isRefreshing = false, error = message) }
+                initialLoadDone = true
             }
         }
     }
