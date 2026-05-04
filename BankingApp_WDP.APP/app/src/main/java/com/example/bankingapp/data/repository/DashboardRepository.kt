@@ -15,7 +15,7 @@ class DashboardRepository {
         RetrofitClient.cardsApi.getCards()
 
     suspend fun getRecentTransactions(): List<TransactionResponse> =
-        RetrofitClient.transactionsApi.getTransactions(page = 1, pageSize = 5)
+        RetrofitClient.transactionsApi.getTransactions(page = 1, pageSize = 5).items
 
     suspend fun getUnreadNotificationCount(): Int =
         RetrofitClient.notificationsApi.getUnreadCount()

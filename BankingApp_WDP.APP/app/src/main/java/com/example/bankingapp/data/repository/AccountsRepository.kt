@@ -27,5 +27,5 @@ class AccountsRepository {
         page: Int,
         pageSize: Int
     ): List<TransactionResponse> =
-        RetrofitClient.transactionsApi.getAccountTransactions(accountId, page, pageSize)
+        RetrofitClient.transactionsApi.getAccountTransactions(accountId, page, pageSize).items
 }

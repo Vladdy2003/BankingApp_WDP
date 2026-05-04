@@ -1,6 +1,10 @@
 package com.example.bankingapp.ui.screens.accounts
 
 import android.widget.Toast
+import com.example.bankingapp.ui.screens.transactions.DepositBottomSheet
+import com.example.bankingapp.ui.screens.transactions.TransactionSheetViewModel
+import com.example.bankingapp.ui.screens.transactions.WithdrawBottomSheet
+import com.example.bankingapp.ui.screens.transactions.TransferBottomSheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -98,13 +102,27 @@ import java.util.Locale
 fun AccountDetailScreen(
     accountId: String,
     onNavigateBack: () -> Unit,
-    viewModel: AccountDetailViewModel = viewModel()
+    viewModel: AccountDetailViewModel = viewModel(),
+    sheetViewModel: TransactionSheetViewModel = viewModel()
 ) {
     val uiState  by viewModel.uiState.collectAsState()
     val snackbar = remember { SnackbarHostState() }
     val context  = LocalContext.current
     val isDark   = isSystemInDarkTheme()
     val listState = rememberLazyListState()
+
+    var showDepositSheet  by remember { mutableStateOf(false) }
+    var showWithdrawSheet by remember { mutableStateOf(false) }
+    var showTransferSheet by remember { mutableStateOf(false) }
+
+    val sheetState by sheetViewModel.uiState.collectAsState()
+    LaunchedEffect(sheetState.successMessage) {
+        sheetState.successMessage?.let { msg ->
+            snackbar.showSnackbar(msg)
+            sheetViewModel.clearSuccess()
+            viewModel.loadAccount()
+        }
+    }
 
     // Init (guard against double-init on recompose)
     LaunchedEffect(accountId) { viewModel.init(accountId) }
@@ -249,9 +267,9 @@ fun AccountDetailScreen(
             item {
                 QuickActionsRow(
                     isDark     = isDark,
-                    onDeposit  = { Toast.makeText(context, "Disponibil în curând", Toast.LENGTH_SHORT).show() },
-                    onWithdraw = { Toast.makeText(context, "Disponibil în curând", Toast.LENGTH_SHORT).show() },
-                    onTransfer = { Toast.makeText(context, "Disponibil în curând", Toast.LENGTH_SHORT).show() }
+                    onDeposit  = { sheetViewModel.resetSheet(); showDepositSheet  = true },
+                    onWithdraw = { sheetViewModel.resetSheet(); showWithdrawSheet = true },
+                    onTransfer = { sheetViewModel.resetSheet(); showTransferSheet = true }
                 )
             }
 
@@ -327,6 +345,33 @@ fun AccountDetailScreen(
             onInterestRateChanged = viewModel::setEditInterestRate,
             onCompanyNameChanged  = viewModel::setEditCompanyName,
             onSubmit              = viewModel::updateAccount
+        )
+    }
+
+    // ── Transaction sheets ────────────────────────────────────────────────────
+    val preselected = uiState.account?.id ?: ""
+    if (showDepositSheet) {
+        DepositBottomSheet(
+            preselectedAccountId = preselected,
+            onDismiss            = { showDepositSheet = false },
+            onSuccess            = { _ -> },
+            sheetViewModel       = sheetViewModel
+        )
+    }
+    if (showWithdrawSheet) {
+        WithdrawBottomSheet(
+            preselectedAccountId = preselected,
+            onDismiss            = { showWithdrawSheet = false },
+            onSuccess            = { _ -> },
+            sheetViewModel       = sheetViewModel
+        )
+    }
+    if (showTransferSheet) {
+        TransferBottomSheet(
+            preselectedAccountId = preselected,
+            onDismiss            = { showTransferSheet = false },
+            onSuccess            = { _ -> },
+            sheetViewModel       = sheetViewModel
         )
     }
 

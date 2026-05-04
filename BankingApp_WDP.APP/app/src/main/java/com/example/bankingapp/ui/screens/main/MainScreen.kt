@@ -23,6 +23,7 @@ import com.example.bankingapp.navigation.BottomNavItem
 import com.example.bankingapp.ui.screens.accounts.AccountsListScreen
 import com.example.bankingapp.ui.screens.cards.CardsListScreen
 import com.example.bankingapp.ui.screens.dashboard.DashboardScreen
+import com.example.bankingapp.ui.screens.transactions.TransactionsListScreen
 import com.example.bankingapp.ui.theme.BaGold
 
 @Composable
@@ -90,6 +91,7 @@ fun MainScreen(
                 BottomNavItem.Cards.route -> CardsListScreen(
                     onNavigateToCardDetail = onNavigateToCardDetail
                 )
+                BottomNavItem.Transactions.route -> TransactionsListScreen()
                 else -> PlaceholderTab(
                     label = tabs.first { it.route == selectedTab }.label
                 )
