@@ -43,22 +43,25 @@ public class PdfExportStrategy : IExportStrategy
 
     private static void ComposeHeader(IContainer container, MonthlyReportDto report, string monthName)
     {
-        container.Row(row =>
+        container.Column(col =>
         {
-            row.RelativeItem().Column(col =>
+            col.Item().Row(row =>
             {
-                col.Item().Text("BANKINGAPP").Bold().FontSize(20).FontColor("#1a56db");
-                col.Item().Text("Extras de Cont Lunar").FontSize(11).FontColor(Colors.Grey.Darken2);
+                row.RelativeItem().Column(inner =>
+                {
+                    inner.Item().Text("BANKINGAPP").Bold().FontSize(20).FontColor("#1a56db");
+                    inner.Item().Text("Extras de Cont Lunar").FontSize(11).FontColor(Colors.Grey.Darken2);
+                });
+                row.RelativeItem().AlignRight().Column(inner =>
+                {
+                    inner.Item().Text(monthName).Bold().FontSize(12);
+                    inner.Item().Text($"IBAN: {report.IBAN}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                    inner.Item().Text($"Monedă: {report.Currency}").FontSize(9).FontColor(Colors.Grey.Darken2);
+                });
             });
-            row.RelativeItem().AlignRight().Column(col =>
-            {
-                col.Item().Text(monthName).Bold().FontSize(12);
-                col.Item().Text($"IBAN: {report.IBAN}").FontSize(9).FontColor(Colors.Grey.Darken2);
-                col.Item().Text($"Monedă: {report.Currency}").FontSize(9).FontColor(Colors.Grey.Darken2);
-            });
-        });
 
-        container.PaddingTop(5).LineHorizontal(1).LineColor("#1a56db");
+            col.Item().PaddingTop(5).LineHorizontal(1).LineColor("#1a56db");
+        });
     }
 
     private static void ComposeContent(IContainer container, MonthlyReportDto report)

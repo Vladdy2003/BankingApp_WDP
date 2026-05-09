@@ -11,6 +11,7 @@ import com.example.bankingapp.data.model.transaction.WithdrawRequest
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.repository.TransactionsRepository
+import com.example.bankingapp.data.util.DataRefreshBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -101,6 +102,7 @@ class TransactionSheetViewModel(application: Application) : AndroidViewModel(app
                 )
                 transactionsRepository.deposit(req)
                 _uiState.update { it.copy(isSubmitting = false, successMessage = "Depozit efectuat: +${formatAmt(amt)} ${accountCurrency(s)}") }
+                DataRefreshBus.notifyRefresh()
             } catch (e: retrofit2.HttpException) {
                 _uiState.update { it.copy(isSubmitting = false, error = httpError(e)) }
             } catch (e: java.io.IOException) {
@@ -130,6 +132,7 @@ class TransactionSheetViewModel(application: Application) : AndroidViewModel(app
                 )
                 transactionsRepository.withdraw(req)
                 _uiState.update { it.copy(isSubmitting = false, successMessage = "Retragere efectuată: -${formatAmt(amt)} ${accountCurrency(s)}") }
+                DataRefreshBus.notifyRefresh()
             } catch (e: retrofit2.HttpException) {
                 _uiState.update { it.copy(isSubmitting = false, error = httpError(e)) }
             } catch (e: java.io.IOException) {
@@ -177,6 +180,7 @@ class TransactionSheetViewModel(application: Application) : AndroidViewModel(app
                 )
                 transactionsRepository.transfer(req)
                 _uiState.update { it.copy(isSubmitting = false, successMessage = "Transfer efectuat: -${formatAmt(amt)} ${accountCurrency(s)}") }
+                DataRefreshBus.notifyRefresh()
             } catch (e: retrofit2.HttpException) {
                 _uiState.update { it.copy(isSubmitting = false, error = httpError(e)) }
             } catch (e: java.io.IOException) {

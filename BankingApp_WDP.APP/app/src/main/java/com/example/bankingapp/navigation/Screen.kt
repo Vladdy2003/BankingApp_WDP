@@ -20,4 +20,5 @@ sealed class Screen(val route: String) {
         fun navRoute(cardId: String) = "card_detail/$cardId"
     }
     object Profile        : Screen("profile")
+    object Reports        : Screen("reports")
 }

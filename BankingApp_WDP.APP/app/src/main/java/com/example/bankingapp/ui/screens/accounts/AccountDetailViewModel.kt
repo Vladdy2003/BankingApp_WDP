@@ -9,6 +9,7 @@ import com.example.bankingapp.data.model.account.UpdateAccountRequest
 import com.example.bankingapp.data.model.transaction.TransactionResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
+import com.example.bankingapp.data.util.DataRefreshBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -54,6 +55,14 @@ class AccountDetailViewModel(application: Application) : AndroidViewModel(applic
         accountId = id
         loadAccount()
         loadTransactions(reset = true)
+        viewModelScope.launch {
+            DataRefreshBus.events.collect {
+                if (accountId.isNotEmpty()) {
+                    loadAccount()
+                    loadTransactions(reset = true)
+                }
+            }
+        }
     }
 
     // ── Load account ──────────────────────────────────────────────────────────

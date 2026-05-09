@@ -7,6 +7,7 @@ import com.example.bankingapp.data.local.TokenManager
 import com.example.bankingapp.data.model.transaction.TransactionResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.TransactionsRepository
+import com.example.bankingapp.data.util.DataRefreshBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,7 +53,12 @@ class TransactionsListViewModel(application: Application) : AndroidViewModel(app
 
     private val allTransactions = mutableListOf<TransactionResponse>()
 
-    init { loadPage(reset = true) }
+    init {
+        loadPage(reset = true)
+        viewModelScope.launch {
+            DataRefreshBus.events.collect { loadPage(reset = true) }
+        }
+    }
 
     fun loadPage(reset: Boolean = false) {
         val state = _uiState.value

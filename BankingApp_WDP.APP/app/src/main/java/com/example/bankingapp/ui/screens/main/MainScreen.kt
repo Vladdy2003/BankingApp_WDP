@@ -31,6 +31,7 @@ fun MainScreen(
     onNavigateToAccountDetail: (String) -> Unit,
     onNavigateToCardDetail: (String) -> Unit = {},
     onNavigateToProfile: () -> Unit,
+    onNavigateToReports: () -> Unit,
     onNavigateToLogin: () -> Unit,
     isDarkTheme: Boolean,
     onToggleDarkTheme: () -> Unit
@@ -98,6 +99,7 @@ fun MainScreen(
                 BottomNavItem.Transactions.route -> TransactionsListScreen()
                 BottomNavItem.Settings.route -> SettingsScreen(
                     onNavigateToProfile = onNavigateToProfile,
+                    onNavigateToReports = onNavigateToReports,
                     onNavigateToLogin   = onNavigateToLogin,
                     isDarkTheme         = isDarkTheme,
                     onToggleDarkTheme   = onToggleDarkTheme

@@ -121,6 +121,7 @@ fun AccountDetailScreen(
             snackbar.showSnackbar(msg)
             sheetViewModel.clearSuccess()
             viewModel.loadAccount()
+            viewModel.loadTransactions(reset = true)
         }
     }
 

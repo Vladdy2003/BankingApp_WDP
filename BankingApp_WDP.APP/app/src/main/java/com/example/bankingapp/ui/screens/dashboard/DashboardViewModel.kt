@@ -10,6 +10,7 @@ import com.example.bankingapp.data.model.report.MonthlyBreakdown
 import com.example.bankingapp.data.model.transaction.TransactionResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.DashboardRepository
+import com.example.bankingapp.data.util.DataRefreshBus
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -43,6 +44,9 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         loadData()
+        viewModelScope.launch {
+            DataRefreshBus.events.collect { refresh() }
+        }
     }
 
     /** Apelat de DashboardScreen la fiecare intrare în compoziție.

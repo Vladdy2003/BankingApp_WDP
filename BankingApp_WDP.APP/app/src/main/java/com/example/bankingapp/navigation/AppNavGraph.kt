@@ -13,6 +13,7 @@ import com.example.bankingapp.ui.screens.main.MainScreen
 import com.example.bankingapp.ui.screens.notifications.NotificationsScreen
 import com.example.bankingapp.ui.screens.register.RegisterScreen
 import com.example.bankingapp.ui.screens.settings.ProfileScreen
+import com.example.bankingapp.ui.screens.settings.ReportsScreen
 import com.example.bankingapp.ui.screens.splash.SplashScreen
 
 @Composable
@@ -91,6 +92,9 @@ fun AppNavGraph(
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
                 },
+                onNavigateToReports = {
+                    navController.navigate(Screen.Reports.route)
+                },
                 onNavigateToLogin = {
                     navController.navigate(Screen.Login.navRoute()) {
                         popUpTo(0) { inclusive = true }
@@ -143,6 +147,12 @@ fun AppNavGraph(
 
         composable(Screen.Profile.route) {
             ProfileScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Reports.route) {
+            ReportsScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

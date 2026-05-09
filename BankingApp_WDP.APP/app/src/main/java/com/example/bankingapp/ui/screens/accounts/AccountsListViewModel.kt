@@ -8,6 +8,7 @@ import com.example.bankingapp.data.model.account.AccountResponse
 import com.example.bankingapp.data.model.account.CreateAccountRequest
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
+import com.example.bankingapp.data.util.DataRefreshBus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,7 +37,34 @@ class AccountsListViewModel(application: Application) : AndroidViewModel(applica
     private val _uiState = MutableStateFlow(AccountsListUiState())
     val uiState: StateFlow<AccountsListUiState> = _uiState.asStateFlow()
 
-    init { loadAccounts() }
+    init {
+        loadAccounts()
+        viewModelScope.launch {
+            DataRefreshBus.events.collect { refresh() }
+        }
+    }
+
+    // Refresh silent (fără spinner dacă datele există deja)
+    fun refresh() {
+        val hasData = _uiState.value.accounts.isNotEmpty()
+        viewModelScope.launch {
+            if (!hasData) _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val token = tokenManager.getAccessToken() ?: ""
+                RetrofitClient.setAuthToken(token)
+                val accounts = repository.getAccounts()
+                _uiState.update { it.copy(isLoading = false, accounts = accounts) }
+            } catch (e: retrofit2.HttpException) {
+                val msg = when (e.code()) {
+                    401  -> "Sesiunea a expirat."
+                    else -> "Eroare server (${e.code()})."
+                }
+                _uiState.update { it.copy(isLoading = false, error = msg) }
+            } catch (e: java.io.IOException) {
+                _uiState.update { it.copy(isLoading = false, error = "Fără conexiune la internet.") }
+            }
+        }
+    }
 
     fun loadAccounts() {
         viewModelScope.launch {

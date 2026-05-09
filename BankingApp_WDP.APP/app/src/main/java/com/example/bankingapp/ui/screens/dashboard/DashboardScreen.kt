@@ -145,6 +145,7 @@ private val monthNames = listOf("Ian", "Feb", "Mar", "Apr", "Mai", "Iun",
 fun DashboardScreen(
     onNavigateToNotifications: () -> Unit = {},
     onNavigateToAccountDetail: (String) -> Unit = {},
+    onNavigateToCardDetail: (String) -> Unit = {},
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
