@@ -88,7 +88,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun markAsRead(id: String) {
+    fun markAsRead(id: Int) {
         val notification = _uiState.value.notifications.find { it.id == id }
         if (notification == null || notification.isRead) return
 
@@ -125,7 +125,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun deleteNotification(id: String) {
+    fun deleteNotification(id: Int) {
         _uiState.update { state ->
             val updated = state.notifications.filter { it.id != id }
             state.copy(

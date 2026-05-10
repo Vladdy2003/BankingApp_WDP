@@ -1,6 +1,7 @@
 package com.example.bankingapp.data.api
 
 import com.example.bankingapp.data.model.notification.NotificationResponse
+import com.example.bankingapp.data.model.notification.PagedNotificationResponse
 import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.DELETE
@@ -18,14 +19,14 @@ interface NotificationsApi {
     suspend fun getNotifications(
         @Query("page")     page: Int,
         @Query("pageSize") pageSize: Int
-    ): List<NotificationResponse>
+    ): PagedNotificationResponse
 
     @PUT("api/notifications/{id}/read")
-    suspend fun markAsRead(@Path("id") id: String): Response<ResponseBody>
+    suspend fun markAsRead(@Path("id") id: Int): Response<ResponseBody>
 
     @PUT("api/notifications/read-all")
     suspend fun markAllAsRead(): Response<ResponseBody>
 
     @DELETE("api/notifications/{id}")
-    suspend fun deleteNotification(@Path("id") id: String): Response<ResponseBody>
+    suspend fun deleteNotification(@Path("id") id: Int): Response<ResponseBody>
 }

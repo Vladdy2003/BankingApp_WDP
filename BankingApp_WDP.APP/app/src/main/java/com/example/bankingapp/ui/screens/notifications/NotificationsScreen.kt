@@ -262,8 +262,8 @@ fun NotificationsScreen(
                     SwipeableNotificationItem(
                         notification = notification,
                         isDark       = isDark,
-                        onTap        = { viewModel.markAsRead(notification.id) },
-                        onDelete     = { viewModel.deleteNotification(notification.id) }
+                        onTap        = { id -> viewModel.markAsRead(id) },
+                        onDelete     = { id -> viewModel.deleteNotification(id) }
                     )
                     HorizontalDivider(
                         color     = MaterialTheme.colorScheme.outline,
@@ -298,13 +298,13 @@ fun NotificationsScreen(
 private fun SwipeableNotificationItem(
     notification: NotificationResponse,
     isDark: Boolean,
-    onTap: () -> Unit,
-    onDelete: () -> Unit
+    onTap: (Int) -> Unit,
+    onDelete: (Int) -> Unit
 ) {
     val dismissState = rememberSwipeToDismissBoxState(
         confirmValueChange = { value ->
             if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDelete()
+                onDelete(notification.id)
                 true
             } else false
         }
@@ -319,7 +319,7 @@ private fun SwipeableNotificationItem(
         NotificationItemContent(
             notification = notification,
             isDark       = isDark,
-            onTap        = onTap
+            onTap        = { onTap(notification.id) }
         )
     }
 }

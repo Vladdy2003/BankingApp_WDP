@@ -75,12 +75,9 @@ builder.Services.AddSingleton<IIBANGenerator, IBANGenerator>();
 builder.Services.AddScoped<IAccountFactory, AccountFactory>();
 
 // Abstract Factory Pattern #3 — NotificationFactory
-// ProductionNotificationFactory in production; swap to MockNotificationFactory in tests.
-var isDevelopment = builder.Environment.IsDevelopment();
-if (isDevelopment)
-    builder.Services.AddScoped<INotificationFactory, MockNotificationFactory>();
-else
-    builder.Services.AddScoped<INotificationFactory, ProductionNotificationFactory>();
+// ProductionNotificationFactory trimite emailuri reale via MailKit (SMTP Gmail).
+// MockNotificationFactory simulează trimiterea — folosit doar în teste unitare.
+builder.Services.AddScoped<INotificationFactory, ProductionNotificationFactory>();
 
 // Builder Pattern #5 — TransactionBuilder: construiește tranzacții pas cu pas cu validare per câmp
 builder.Services.AddTransient<ITransactionBuilder, TransactionBuilder>();
@@ -128,7 +125,7 @@ builder.Services.AddScoped<ITransactionProcessor>(sp =>
     ITransactionProcessor processor = sp.GetRequiredService<BasicTransactionProcessor>();
     processor = new LoggingTransactionDecorator(processor, sp.GetRequiredService<ILoggerService>());
     processor = new FeeTransactionDecorator(processor, sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
-    processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<INotificationFactory>(), sp.GetRequiredService<IEmailTemplateService>(), sp.GetRequiredService<AppDbContext>(), sp.GetRequiredService<ILoggerService>());
+    processor = new NotificationTransactionDecorator(processor, sp.GetRequiredService<ILoggerService>());
     return processor;
 });
 
