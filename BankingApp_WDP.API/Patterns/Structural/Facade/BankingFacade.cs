@@ -5,6 +5,7 @@ using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Behavioral.Command;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Decorator;
 using BankingApp.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,7 @@ public class BankingFacade : IBankingFacade
     private readonly IAccountService _accountService;
     private readonly ITransactionCommandInvoker _invoker;
     private readonly ITransactionValidator _validator;
+    private readonly ITransactionProcessor _processor;
     private readonly ILoggerService _logger;
     private readonly IReportService _reportService;
 
@@ -26,6 +28,7 @@ public class BankingFacade : IBankingFacade
         IAccountService accountService,
         ITransactionCommandInvoker invoker,
         ITransactionValidator validator,
+        ITransactionProcessor processor,
         ILoggerService logger,
         IReportService reportService)
     {
@@ -33,6 +36,7 @@ public class BankingFacade : IBankingFacade
         _accountService = accountService;
         _invoker = invoker;
         _validator = validator;
+        _processor = processor;
         _logger = logger;
         _reportService = reportService;
     }
@@ -117,10 +121,11 @@ public class BankingFacade : IBankingFacade
             ?? throw new InvalidOperationException($"Contul destinație #{transferDto.ToAccountId} nu a fost găsit.");
 
         // TransferCommand include intern Chain of Responsibility #6 (validator).
-        // Observer #11 este declanșat de BasicTransactionProcessor după ExecuteAsync.
+        // Observer #11 este declanșat de BasicTransactionProcessor după ProcessAsync.
         var command = new TransferCommand(
             _db,
             _validator,
+            _processor,
             _logger,
             transferDto.FromAccountId,
             transferDto.ToAccountId,

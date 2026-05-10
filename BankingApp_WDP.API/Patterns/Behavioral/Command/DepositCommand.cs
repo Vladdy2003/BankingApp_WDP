@@ -3,6 +3,7 @@ using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Decorator;
 using Microsoft.EntityFrameworkCore;
 
 namespace BankingApp.Patterns.Behavioral.Command;
@@ -11,6 +12,7 @@ public class DepositCommand : ITransactionCommand
 {
     private readonly AppDbContext _db;
     private readonly ITransactionValidator _validator;
+    private readonly ITransactionProcessor _processor;
     private readonly ILoggerService _logger;
 
     private readonly int _toAccountId;
@@ -23,6 +25,7 @@ public class DepositCommand : ITransactionCommand
     public DepositCommand(
         AppDbContext db,
         ITransactionValidator validator,
+        ITransactionProcessor processor,
         ILoggerService logger,
         int toAccountId,
         decimal amount,
@@ -31,6 +34,7 @@ public class DepositCommand : ITransactionCommand
     {
         _db = db;
         _validator = validator;
+        _processor = processor;
         _logger = logger;
         _toAccountId = toAccountId;
         _amount = amount;
@@ -49,18 +53,20 @@ public class DepositCommand : ITransactionCommand
             .WithDestinationAccount(_toAccountId)
             .WithCurrency(_currency)
             .WithDescription(_description ?? "Depozit")
-            .Build();
+            .Build(); // Status = Pending
 
         _validator.Validate(tx, account);
 
-        account.Balance += _amount;
-        tx.Status = TransactionStatus.Completed;
-        tx.ProcessedAt = DateTime.UtcNow;
-
+        // Salvăm tranzacția ca Pending, astfel procesorul o poate găsi prin FindAsync
         _db.Transactions.Add(tx);
         await _db.SaveChangesAsync();
 
         _executedTransactionId = tx.Id;
+
+        // Delegăm la lanțul Decorator → BasicTransactionProcessor care:
+        // actualizează soldul, setează Completed, și declanșează Observer (AuditLog, Notificări)
+        await _processor.ProcessAsync(tx);
+
         _logger.LogInformation($"[DepositCommand] Depozit {_amount} {_currency} → cont {_toAccountId}. TxId={_executedTransactionId}");
     }
 

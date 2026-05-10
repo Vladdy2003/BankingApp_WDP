@@ -5,6 +5,7 @@ using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Behavioral.Command;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Decorator;
 using BankingApp.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +22,7 @@ public class TransactionsController : ControllerBase
     private readonly IAccountService _accountService;
     private readonly ITransactionCommandInvoker _invoker;
     private readonly ITransactionValidator _validator;
+    private readonly ITransactionProcessor _processor;
     private readonly ILoggerService _logger;
 
     public TransactionsController(
@@ -28,12 +30,14 @@ public class TransactionsController : ControllerBase
         IAccountService accountService,
         ITransactionCommandInvoker invoker,
         ITransactionValidator validator,
+        ITransactionProcessor processor,
         ILoggerService logger)
     {
         _db = db;
         _accountService = accountService;
         _invoker = invoker;
         _validator = validator;
+        _processor = processor;
         _logger = logger;
     }
 
@@ -123,7 +127,7 @@ public class TransactionsController : ControllerBase
                 return Forbid();
 
             var command = new DepositCommand(
-                _db, _validator, _logger,
+                _db, _validator, _processor, _logger,
                 request.ToAccountId, request.Amount, request.Currency, request.Description);
 
             await _invoker.ExecuteAsync(command);
@@ -156,7 +160,7 @@ public class TransactionsController : ControllerBase
                 return Forbid();
 
             var command = new WithdrawalCommand(
-                _db, _validator, _logger,
+                _db, _validator, _processor, _logger,
                 request.FromAccountId, request.Amount, request.Currency, request.Description);
 
             await _invoker.ExecuteAsync(command);
@@ -196,7 +200,7 @@ public class TransactionsController : ControllerBase
                 return NotFound(new { message = $"Contul destinație #{request.ToAccountId} nu a fost găsit." });
 
             var command = new TransferCommand(
-                _db, _validator, _logger,
+                _db, _validator, _processor, _logger,
                 request.FromAccountId, request.ToAccountId,
                 request.Amount, request.Currency, request.Description);
 

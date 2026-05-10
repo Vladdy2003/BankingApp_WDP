@@ -3,6 +3,7 @@ using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.ChainOfResponsibility;
 using BankingApp.Patterns.Creational.Builder;
 using BankingApp.Patterns.Creational.Singleton;
+using BankingApp.Patterns.Structural.Decorator;
 
 namespace BankingApp.Patterns.Behavioral.Command;
 
@@ -10,6 +11,7 @@ public class TransferCommand : ITransactionCommand
 {
     private readonly AppDbContext _db;
     private readonly ITransactionValidator _validator;
+    private readonly ITransactionProcessor _processor;
     private readonly ILoggerService _logger;
 
     private readonly int _fromAccountId;
@@ -23,6 +25,7 @@ public class TransferCommand : ITransactionCommand
     public TransferCommand(
         AppDbContext db,
         ITransactionValidator validator,
+        ITransactionProcessor processor,
         ILoggerService logger,
         int fromAccountId,
         int toAccountId,
@@ -32,6 +35,7 @@ public class TransferCommand : ITransactionCommand
     {
         _db = db;
         _validator = validator;
+        _processor = processor;
         _logger = logger;
         _fromAccountId = fromAccountId;
         _toAccountId = toAccountId;
@@ -55,20 +59,21 @@ public class TransferCommand : ITransactionCommand
             .WithDestinationAccount(_toAccountId)
             .WithCurrency(_currency)
             .WithDescription(_description ?? "Transfer")
-            .Build();
+            .Build(); // Status = Pending
 
         // validarea se execută pe contul sursă (verificare sold, limită zilnică, fraud)
         _validator.Validate(tx, fromAccount);
 
-        fromAccount.Balance -= _amount;
-        toAccount.Balance += _amount;
-        tx.Status = TransactionStatus.Completed;
-        tx.ProcessedAt = DateTime.UtcNow;
-
+        // Salvăm tranzacția ca Pending, astfel procesorul o poate găsi prin FindAsync
         _db.Transactions.Add(tx);
         await _db.SaveChangesAsync();
 
         _executedTransactionId = tx.Id;
+
+        // Delegăm la lanțul Decorator → BasicTransactionProcessor care:
+        // actualizează soldurile, setează Completed, și declanșează Observer (AuditLog, Notificări)
+        await _processor.ProcessAsync(tx);
+
         _logger.LogInformation($"[TransferCommand] Transfer {_amount} {_currency}: cont {_fromAccountId} → cont {_toAccountId}. TxId={_executedTransactionId}");
     }
 
