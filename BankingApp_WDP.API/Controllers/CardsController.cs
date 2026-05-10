@@ -2,6 +2,7 @@ using System.Security.Claims;
 using BankingApp.Data;
 using BankingApp.DTOs.Cards;
 using BankingApp.Models;
+using BankingApp.Patterns.Creational.AbstractFactory;
 using BankingApp.Patterns.Creational.Prototype;
 using BankingApp.Patterns.Creational.Singleton;
 using BankingApp.Services;
@@ -20,17 +21,23 @@ public class CardsController : ControllerBase
     private readonly ICardFactory _cardFactory;
     private readonly IAccountService _accountService;
     private readonly ILoggerService _logger;
+    private readonly INotificationFactory _notificationFactory;
+    private readonly IEmailTemplateService _emailTemplates;
 
     public CardsController(
         AppDbContext db,
         ICardFactory cardFactory,
         IAccountService accountService,
-        ILoggerService logger)
+        ILoggerService logger,
+        INotificationFactory notificationFactory,
+        IEmailTemplateService emailTemplates)
     {
         _db = db;
         _cardFactory = cardFactory;
         _accountService = accountService;
         _logger = logger;
+        _notificationFactory = notificationFactory;
+        _emailTemplates = emailTemplates;
     }
 
     private string CurrentUserId =>
@@ -95,6 +102,26 @@ public class CardsController : ControllerBase
         await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Card emis: Id={card.Id}, Type={card.Type}, AccountId={card.AccountId}");
+
+        // Trimitere confirmare prin Abstract Factory Pattern #3
+        var firstName   = User.FindFirstValue("firstName") ?? "Client";
+        var userEmail   = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
+        var last4       = card.CardNumber.Length >= 4 ? card.CardNumber[^4..] : card.CardNumber;
+        var maskedNumber = $"**** **** **** {last4}";
+
+        var emailNotif = _notificationFactory.CreateEmailNotification();
+        await emailNotif.SendAsync(
+            userEmail,
+            "Card bancar emis — BankingApp",
+            _emailTemplates.CardCreatedEmail(
+                firstName,
+                card.Type.ToString(),
+                maskedNumber,
+                card.ExpiryDate,
+                card.DailyLimit,
+                card.MonthlyLimit,
+                account.Currency,
+                card.CreatedAt));
 
         return CreatedAtAction(nameof(GetById), new { id = card.Id }, CardResponse.FromCard(card));
     }

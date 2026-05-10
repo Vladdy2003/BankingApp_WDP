@@ -18,15 +18,18 @@ public class AccountsController : ControllerBase
     private readonly IAccountService _accountService;
     private readonly IAccountFactory _accountFactory;
     private readonly INotificationFactory _notificationFactory;
+    private readonly IEmailTemplateService _emailTemplates;
 
     public AccountsController(
         IAccountService accountService,
         IAccountFactory accountFactory,
-        INotificationFactory notificationFactory)
+        INotificationFactory notificationFactory,
+        IEmailTemplateService emailTemplates)
     {
         _accountService = accountService;
         _accountFactory = accountFactory;
         _notificationFactory = notificationFactory;
+        _emailTemplates = emailTemplates;
     }
 
     private string CurrentUserId =>
@@ -80,11 +83,18 @@ public class AccountsController : ControllerBase
         var created = await _accountService.CreateAsync(account);
 
         // Trimitere confirmare prin Abstract Factory Pattern #3
+        var firstName = User.FindFirstValue("firstName") ?? "Client";
         var email = _notificationFactory.CreateEmailNotification();
         await email.SendAsync(
             User.FindFirstValue(ClaimTypes.Email) ?? string.Empty,
-            "Cont bancar creat",
-            $"Contul tău de tip {created.Type} cu IBAN {created.IBAN} a fost creat cu succes.");
+            "Cont bancar deschis — BankingApp",
+            _emailTemplates.AccountCreatedEmail(
+                firstName,
+                created.Type.ToString(),
+                created.IBAN,
+                created.Currency,
+                created.Id,
+                created.CreatedAt));
 
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, AccountResponse.FromAccount(created));
     }
