@@ -3,7 +3,7 @@ package com.example.bankingapp.data.model.report
 import com.google.gson.annotations.SerializedName
 
 data class AnnualSummaryResponse(
-    @SerializedName("accountId")         val accountId: String,
+    @SerializedName("accountId")         val accountId: Int,
     @SerializedName("iban")              val iban: String,
     @SerializedName("currency")          val currency: String,
     @SerializedName("year")              val year: Int,
