@@ -37,11 +37,13 @@ public class AuditLogObserver : ITransactionObserver
         });
 
         await _auditService.LogAsync(
-            action: $"Transaction.{tx.Type}",
-            userId: evt.InitiatorUserId,
+            action:     $"Transaction.{tx.Type}",
+            userId:     evt.InitiatorUserId,
             entityType: nameof(Transaction),
-            entityId: tx.Id.ToString(),
-            newValues: newValues);
+            entityId:   tx.Id.ToString(),
+            newValues:  newValues,
+            ipAddress:  evt.IpAddress,
+            userAgent:  evt.UserAgent);
 
         _logger.LogInformation($"[Observer][Audit] Înregistrat în audit log: Transaction.{tx.Type} pentru tranzacția #{tx.Id}.");
     }

@@ -1,6 +1,7 @@
 using BankingApp.Data;
 using BankingApp.Models;
 using BankingApp.Patterns.Behavioral.Observer;
+using Microsoft.AspNetCore.Http;
 
 namespace BankingApp.Patterns.Structural.Decorator;
 
@@ -13,11 +14,16 @@ public class BasicTransactionProcessor : ITransactionProcessor
 {
     private readonly AppDbContext _db;
     private readonly ITransactionObservable _publisher;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public BasicTransactionProcessor(AppDbContext db, ITransactionObservable publisher)
+    public BasicTransactionProcessor(
+        AppDbContext db,
+        ITransactionObservable publisher,
+        IHttpContextAccessor httpContextAccessor)
     {
         _db = db;
         _publisher = publisher;
+        _httpContextAccessor = httpContextAccessor;
     }
 
     public async Task<Transaction> ProcessAsync(Transaction transaction)
@@ -63,10 +69,17 @@ public class BasicTransactionProcessor : ITransactionProcessor
         tx.ProcessedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
 
+        var ctx       = _httpContextAccessor.HttpContext;
+        var ipAddress = ctx?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+                        ?? ctx?.Connection.RemoteIpAddress?.ToString();
+        var userAgent = ctx?.Request.Headers["User-Agent"].FirstOrDefault();
+
         await _publisher.NotifyObserversAsync(new TransactionEvent
         {
-            Transaction = tx,
-            InitiatorUserId = initiatorUserId
+            Transaction     = tx,
+            InitiatorUserId = initiatorUserId,
+            IpAddress       = ipAddress,
+            UserAgent       = userAgent
         });
 
         return tx;
