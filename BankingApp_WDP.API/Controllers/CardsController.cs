@@ -23,6 +23,7 @@ public class CardsController : ControllerBase
     private readonly ILoggerService _logger;
     private readonly INotificationFactory _notificationFactory;
     private readonly IEmailTemplateService _emailTemplates;
+    private readonly IAuditService _auditService;
 
     public CardsController(
         AppDbContext db,
@@ -30,15 +31,24 @@ public class CardsController : ControllerBase
         IAccountService accountService,
         ILoggerService logger,
         INotificationFactory notificationFactory,
-        IEmailTemplateService emailTemplates)
+        IEmailTemplateService emailTemplates,
+        IAuditService auditService)
     {
-        _db = db;
-        _cardFactory = cardFactory;
-        _accountService = accountService;
-        _logger = logger;
+        _db                  = db;
+        _cardFactory         = cardFactory;
+        _accountService      = accountService;
+        _logger              = logger;
         _notificationFactory = notificationFactory;
-        _emailTemplates = emailTemplates;
+        _emailTemplates      = emailTemplates;
+        _auditService        = auditService;
     }
+
+    private string? GetClientIp() =>
+        Request.Headers["X-Forwarded-For"].FirstOrDefault()
+        ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+
+    private string? GetUserAgent() =>
+        Request.Headers["User-Agent"].FirstOrDefault();
 
     private string CurrentUserId =>
         User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -103,6 +113,16 @@ public class CardsController : ControllerBase
 
         _logger.LogInformation($"Card emis: Id={card.Id}, Type={card.Type}, AccountId={card.AccountId}");
 
+        await _auditService.LogAsync(
+            action:     "Card.Create",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  $"{{\"type\":\"{card.Type}\",\"accountId\":{card.AccountId}," +
+                        $"\"dailyLimit\":{card.DailyLimit},\"monthlyLimit\":{card.MonthlyLimit}}}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
+
         // Trimitere confirmare prin Abstract Factory Pattern #3
         var firstName   = User.FindFirstValue("firstName") ?? "Client";
         var userEmail   = User.FindFirstValue(ClaimTypes.Email) ?? string.Empty;
@@ -151,6 +171,15 @@ public class CardsController : ControllerBase
 
         _logger.LogInformation($"Card blocat: Id={card.Id}");
 
+        await _auditService.LogAsync(
+            action:     "Card.Block",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  "{\"status\":\"Blocked\"}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
+
         return Ok(CardResponse.FromCard(card));
     }
 
@@ -175,6 +204,15 @@ public class CardsController : ControllerBase
         await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Card deblocat: Id={card.Id}");
+
+        await _auditService.LogAsync(
+            action:     "Card.Unblock",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  "{\"status\":\"Active\"}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
 
         return Ok(CardResponse.FromCard(card));
     }
@@ -208,6 +246,15 @@ public class CardsController : ControllerBase
         await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Limite card actualizate: Id={card.Id}, Daily={card.DailyLimit}, Monthly={card.MonthlyLimit}");
+
+        await _auditService.LogAsync(
+            action:     "Card.UpdateLimits",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  $"{{\"dailyLimit\":{card.DailyLimit},\"monthlyLimit\":{card.MonthlyLimit}}}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
 
         return Ok(CardResponse.FromCard(card));
     }
@@ -322,6 +369,15 @@ public class CardsController : ControllerBase
         await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Card anulat: Id={card.Id}");
+
+        await _auditService.LogAsync(
+            action:     "Card.Cancel",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  "{\"status\":\"Expired\"}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
 
         return NoContent();
     }

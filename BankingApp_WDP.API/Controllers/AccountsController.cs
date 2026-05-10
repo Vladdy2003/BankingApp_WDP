@@ -19,18 +19,28 @@ public class AccountsController : ControllerBase
     private readonly IAccountFactory _accountFactory;
     private readonly INotificationFactory _notificationFactory;
     private readonly IEmailTemplateService _emailTemplates;
+    private readonly IAuditService _auditService;
 
     public AccountsController(
         IAccountService accountService,
         IAccountFactory accountFactory,
         INotificationFactory notificationFactory,
-        IEmailTemplateService emailTemplates)
+        IEmailTemplateService emailTemplates,
+        IAuditService auditService)
     {
-        _accountService = accountService;
-        _accountFactory = accountFactory;
+        _accountService      = accountService;
+        _accountFactory      = accountFactory;
         _notificationFactory = notificationFactory;
-        _emailTemplates = emailTemplates;
+        _emailTemplates      = emailTemplates;
+        _auditService        = auditService;
     }
+
+    private string? GetClientIp() =>
+        Request.Headers["X-Forwarded-For"].FirstOrDefault()
+        ?? HttpContext.Connection.RemoteIpAddress?.ToString();
+
+    private string? GetUserAgent() =>
+        Request.Headers["User-Agent"].FirstOrDefault();
 
     private string CurrentUserId =>
         User.FindFirstValue(ClaimTypes.NameIdentifier)!;
@@ -96,6 +106,16 @@ public class AccountsController : ControllerBase
                 created.Id,
                 created.CreatedAt));
 
+        await _auditService.LogAsync(
+            action:     "Account.Create",
+            userId:     CurrentUserId,
+            entityType: "Account",
+            entityId:   created.Id.ToString(),
+            newValues:  $"{{\"type\":\"{created.Type}\",\"iban\":\"{created.IBAN}\"," +
+                        $"\"currency\":\"{created.Currency}\",\"status\":\"{created.Status}\"}}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
+
         return CreatedAtAction(nameof(GetById), new { id = created.Id }, AccountResponse.FromAccount(created));
     }
 
@@ -125,6 +145,16 @@ public class AccountsController : ControllerBase
                 ba.CompanyName = request.CompanyName;
 
             var updated = await _accountService.UpdateAsync(account);
+
+            await _auditService.LogAsync(
+                action:     "Account.Update",
+                userId:     CurrentUserId,
+                entityType: "Account",
+                entityId:   id.ToString(),
+                newValues:  $"{{\"currency\":\"{updated.Currency}\"}}",
+                ipAddress:  GetClientIp(),
+                userAgent:  GetUserAgent());
+
             return Ok(AccountResponse.FromAccount(updated));
         }
         catch (InvalidOperationException ex)
@@ -151,6 +181,14 @@ public class AccountsController : ControllerBase
             var closed = await _accountService.CloseAsync(id);
             if (!closed) return NotFound(new { message = "Contul nu a fost găsit." });
 
+            await _auditService.LogAsync(
+                action:     "Account.Close",
+                userId:     CurrentUserId,
+                entityType: "Account",
+                entityId:   id.ToString(),
+                ipAddress:  GetClientIp(),
+                userAgent:  GetUserAgent());
+
             return NoContent();
         }
         catch (InvalidOperationException ex)
@@ -172,6 +210,15 @@ public class AccountsController : ControllerBase
             var result = await _accountService.SuspendAsync(id);
             if (!result) return NotFound(new { message = "Contul nu a fost găsit." });
 
+            await _auditService.LogAsync(
+                action:     "Account.Suspend",
+                userId:     CurrentUserId,
+                entityType: "Account",
+                entityId:   id.ToString(),
+                newValues:  "{\"status\":\"Suspended\"}",
+                ipAddress:  GetClientIp(),
+                userAgent:  GetUserAgent());
+
             return Ok(new { message = "Contul a fost suspendat cu succes." });
         }
         catch (InvalidOperationException ex)
@@ -192,6 +239,15 @@ public class AccountsController : ControllerBase
         {
             var result = await _accountService.ActivateAsync(id);
             if (!result) return NotFound(new { message = "Contul nu a fost găsit." });
+
+            await _auditService.LogAsync(
+                action:     "Account.Activate",
+                userId:     CurrentUserId,
+                entityType: "Account",
+                entityId:   id.ToString(),
+                newValues:  "{\"status\":\"Active\"}",
+                ipAddress:  GetClientIp(),
+                userAgent:  GetUserAgent());
 
             return Ok(new { message = "Contul a fost reactivat cu succes." });
         }
