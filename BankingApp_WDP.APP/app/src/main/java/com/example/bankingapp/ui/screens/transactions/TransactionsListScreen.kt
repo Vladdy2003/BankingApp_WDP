@@ -100,6 +100,9 @@ fun TransactionsListScreen(
     val listState    = rememberLazyListState()
     var fabExpanded  by remember { mutableStateOf(false) }
 
+    // Refresh la fiecare revenire în tab (după prima încărcare)
+    LaunchedEffect(Unit) { viewModel.refreshOnResume() }
+
     // Infinite scroll
     LaunchedEffect(listState) {
         snapshotFlow { listState.canScrollForward }

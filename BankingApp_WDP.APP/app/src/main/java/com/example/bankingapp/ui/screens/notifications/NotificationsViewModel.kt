@@ -7,6 +7,7 @@ import com.example.bankingapp.data.local.TokenManager
 import com.example.bankingapp.data.model.notification.NotificationResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.NotificationsRepository
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,7 +61,7 @@ class NotificationsViewModel(application: Application) : AndroidViewModel(applic
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     401  -> "Sesiunea a expirat."
                     else -> "Eroare server (${e.code()})."
                 }

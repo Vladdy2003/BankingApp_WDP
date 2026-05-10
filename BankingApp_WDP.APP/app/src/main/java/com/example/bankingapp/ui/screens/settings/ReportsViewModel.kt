@@ -13,6 +13,7 @@ import com.example.bankingapp.data.model.report.SpendingByCategoryResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.repository.ReportsRepository
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -121,7 +122,7 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
                 )
                 _uiState.update { it.copy(isLoadingMonthly = false, monthlyReport = report) }
             } catch (e: retrofit2.HttpException) {
-                val msg = if (e.code() == 404) "Nu există date pentru perioada selectată."
+                val msg = e.parseApiMessage() ?: if (e.code() == 404) "Nu există date pentru perioada selectată."
                           else "Eroare server (${e.code()})."
                 _uiState.update { it.copy(isLoadingMonthly = false, error = msg) }
             } catch (e: java.io.IOException) {
@@ -159,7 +160,8 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(isExporting = false, error = "Export eșuat (${e.code()}).") }
+                val msg = e.parseApiMessage() ?: "Export eșuat (${e.code()})."
+                _uiState.update { it.copy(isExporting = false, error = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(isExporting = false, error = "Eroare la salvarea fișierului.") }
             }
@@ -182,7 +184,7 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
                 val summary = reportsRepository.getAnnualSummary(s.selectedAccountId, s.annualYear)
                 _uiState.update { it.copy(isLoadingAnnual = false, annualSummary = summary) }
             } catch (e: retrofit2.HttpException) {
-                val msg = if (e.code() == 404) "Nu există date pentru anul selectat."
+                val msg = e.parseApiMessage() ?: if (e.code() == 404) "Nu există date pentru anul selectat."
                           else "Eroare server (${e.code()})."
                 _uiState.update { it.copy(isLoadingAnnual = false, error = msg) }
             } catch (e: java.io.IOException) {
@@ -209,7 +211,7 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
                 val data = reportsRepository.getSpendingByCategory(s.selectedAccountId, s.spendingFrom, s.spendingTo)
                 _uiState.update { it.copy(isLoadingSpending = false, spendingData = data) }
             } catch (e: retrofit2.HttpException) {
-                val msg = if (e.code() == 404) "Nu există date pentru perioada selectată."
+                val msg = e.parseApiMessage() ?: if (e.code() == 404) "Nu există date pentru perioada selectată."
                           else "Eroare server (${e.code()})."
                 _uiState.update { it.copy(isLoadingSpending = false, error = msg) }
             } catch (e: java.io.IOException) {
@@ -236,7 +238,7 @@ class ReportsViewModel(application: Application) : AndroidViewModel(application)
                 val data = reportsRepository.getIncomeVsExpenses(s.selectedAccountId, s.incomeFrom, s.incomeTo)
                 _uiState.update { it.copy(isLoadingIncome = false, incomeData = data) }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     404  -> "Nu există date pentru perioada selectată."
                     501  -> "Funcționalitate indisponibilă în versiunea curentă."
                     else -> "Eroare server (${e.code()})."

@@ -10,6 +10,8 @@ import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.repository.CardsRepository
 import com.example.bankingapp.data.local.TokenManager
+import com.example.bankingapp.data.util.DataRefreshBus
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -41,11 +43,24 @@ class CardsListViewModel(application: Application) : AndroidViewModel(applicatio
     private val _uiState = MutableStateFlow(CardsListUiState())
     val uiState: StateFlow<CardsListUiState> = _uiState.asStateFlow()
 
-    init { loadCards() }
+    private var initialLoadDone = false
 
-    fun loadCards() {
+    init {
+        loadCards()
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            DataRefreshBus.events.collect { refresh() }
+        }
+    }
+
+    /** Apelat la fiecare revenire în tab — declanșează refresh doar după prima încărcare. */
+    fun refreshOnResume() {
+        if (initialLoadDone) refresh()
+    }
+
+    fun refresh() {
+        val hasData = _uiState.value.cards.isNotEmpty()
+        viewModelScope.launch {
+            if (!hasData) _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val token = tokenManager.getAccessToken() ?: ""
                 RetrofitClient.setAuthToken(token)
@@ -73,6 +88,38 @@ class CardsListViewModel(application: Application) : AndroidViewModel(applicatio
         }
     }
 
+    fun loadCards() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val token = tokenManager.getAccessToken() ?: ""
+                RetrofitClient.setAuthToken(token)
+                val cards    = cardsRepository.getCards()
+                val accounts = accountsRepository.getAccounts()
+                val activeAccounts = accounts.filter { it.status == "Active" || it.status == "0" }
+                val defaultAccountId = activeAccounts.firstOrNull()?.id ?: accounts.firstOrNull()?.id ?: ""
+                _uiState.update {
+                    it.copy(
+                        isLoading         = false,
+                        cards             = cards,
+                        accounts          = activeAccounts.ifEmpty { accounts },
+                        selectedAccountId = if (it.selectedAccountId.isEmpty()) defaultAccountId else it.selectedAccountId
+                    )
+                }
+            } catch (e: retrofit2.HttpException) {
+                val msg = when (e.code()) {
+                    401  -> "Sesiunea a expirat."
+                    else -> "Eroare server (${e.code()})."
+                }
+                _uiState.update { it.copy(isLoading = false, error = msg) }
+            } catch (e: java.io.IOException) {
+                _uiState.update { it.copy(isLoading = false, error = "Fără conexiune la internet.") }
+            } finally {
+                initialLoadDone = true
+            }
+        }
+    }
+
     fun blockCard(cardId: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(blockingCardId = cardId, actionError = null) }
@@ -85,7 +132,8 @@ class CardsListViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(blockingCardId = null, actionError = "Nu s-a putut bloca cardul.") }
+                val msg = e.parseApiMessage() ?: "Nu s-a putut bloca cardul."
+                _uiState.update { it.copy(blockingCardId = null, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(blockingCardId = null, actionError = "Fără conexiune la internet.") }
             }
@@ -104,7 +152,11 @@ class CardsListViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(blockingCardId = null, actionError = "Nu s-a putut debloca cardul.") }
+                val msg = e.parseApiMessage() ?: when (e.code()) {
+                    403  -> "Cardul a fost blocat de administrator și nu poate fi deblocat."
+                    else -> "Nu s-a putut debloca cardul."
+                }
+                _uiState.update { it.copy(blockingCardId = null, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(blockingCardId = null, actionError = "Fără conexiune la internet.") }
             }
@@ -156,7 +208,7 @@ class CardsListViewModel(application: Application) : AndroidViewModel(applicatio
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     400  -> "Date invalide."
                     409  -> "Card existent pentru acest cont."
                     else -> "Eroare server (${e.code()})."

@@ -12,10 +12,12 @@ public enum CardType
 
 public enum CardStatus
 {
-    Active,
-    Blocked,
-    Expired,
-    Pending
+    Active       = 0,
+    Blocked      = 1,
+    Expired      = 2,
+    Pending      = 3,
+    Cancelled    = 4,
+    AdminBlocked = 5
 }
 
 public class Card

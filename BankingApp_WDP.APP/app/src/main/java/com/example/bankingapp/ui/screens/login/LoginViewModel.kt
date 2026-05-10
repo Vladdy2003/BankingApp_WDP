@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bankingapp.data.local.TokenManager
 import com.example.bankingapp.data.repository.AuthRepository
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -53,7 +54,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                 tokenManager.saveUserInfo(response.fullName, response.email, response.userId)
                 _uiState.update { it.copy(isLoading = false, isSuccess = true) }
             } catch (e: retrofit2.HttpException) {
-                val message = when (e.code()) {
+                val message = e.parseApiMessage() ?: when (e.code()) {
                     401  -> "Email sau parolă incorectă."
                     400  -> "Date de autentificare invalide."
                     else -> "Eroare server (${e.code()}). Încercați din nou."

@@ -76,8 +76,8 @@ fun AccountsListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    // Refresh silențios de fiecare dată când tab-ul intră în compoziție
-    LaunchedEffect(Unit) { viewModel.refresh() }
+    // Refresh la fiecare revenire în tab (după prima încărcare)
+    LaunchedEffect(Unit) { viewModel.refreshOnResume() }
 
     LaunchedEffect(uiState.error) {
         uiState.error?.let {

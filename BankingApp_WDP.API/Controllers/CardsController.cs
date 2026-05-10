@@ -160,10 +160,10 @@ public class CardsController : ControllerBase
         if (card.Account.UserId != CurrentUserId)
             return Forbid();
 
-        if (card.Status == CardStatus.Blocked)
+        if (card.Status == CardStatus.Blocked || card.Status == CardStatus.AdminBlocked)
             return BadRequest(new { message = "Cardul este deja blocat." });
 
-        if (card.Status == CardStatus.Expired)
+        if (card.Status == CardStatus.Expired || card.Status == CardStatus.Cancelled)
             return BadRequest(new { message = "Nu se poate bloca un card expirat/anulat." });
 
         card.Status = CardStatus.Blocked;
@@ -196,6 +196,9 @@ public class CardsController : ControllerBase
 
         if (card.Account.UserId != CurrentUserId)
             return Forbid();
+
+        if (card.Status == CardStatus.AdminBlocked)
+            return StatusCode(403, new { message = "Cardul a fost blocat de administrator și nu poate fi deblocat de utilizator." });
 
         if (card.Status != CardStatus.Blocked)
             return BadRequest(new { message = "Cardul nu este blocat." });
@@ -234,7 +237,7 @@ public class CardsController : ControllerBase
         if (card.Account.UserId != CurrentUserId)
             return Forbid();
 
-        if (card.Status == CardStatus.Expired)
+        if (card.Status == CardStatus.Expired || card.Status == CardStatus.Cancelled)
             return BadRequest(new { message = "Nu se pot modifica limitele unui card expirat/anulat." });
 
         if (request.DailyLimit.HasValue)
@@ -362,10 +365,13 @@ public class CardsController : ControllerBase
         if (card.Account.UserId != CurrentUserId)
             return Forbid();
 
-        if (card.Status == CardStatus.Expired)
+        if (card.Status == CardStatus.Cancelled)
             return BadRequest(new { message = "Cardul este deja anulat." });
 
-        card.Status = CardStatus.Expired;
+        if (card.Status == CardStatus.Expired)
+            return BadRequest(new { message = "Cardul este expirat și nu mai poate fi anulat." });
+
+        card.Status = CardStatus.Cancelled;
         await _db.SaveChangesAsync();
 
         _logger.LogInformation($"Card anulat: Id={card.Id}");
@@ -375,10 +381,45 @@ public class CardsController : ControllerBase
             userId:     CurrentUserId,
             entityType: "Card",
             entityId:   card.Id.ToString(),
-            newValues:  "{\"status\":\"Expired\"}",
+            newValues:  "{\"status\":\"Cancelled\"}",
             ipAddress:  GetClientIp(),
             userAgent:  GetUserAgent());
 
         return NoContent();
+    }
+
+    // PUT /api/cards/{id}/admin-block  (Admin only)
+    [HttpPut("{id:int}/admin-block")]
+    [Authorize(Roles = "Admin")]
+    public async Task<IActionResult> AdminBlock(int id)
+    {
+        var card = await _db.Cards
+            .Include(c => c.Account)
+            .FirstOrDefaultAsync(c => c.Id == id);
+
+        if (card == null)
+            return NotFound(new { message = "Cardul nu a fost găsit." });
+
+        if (card.Status == CardStatus.AdminBlocked)
+            return BadRequest(new { message = "Cardul este deja blocat de administrator." });
+
+        if (card.Status == CardStatus.Cancelled || card.Status == CardStatus.Expired)
+            return BadRequest(new { message = "Nu se poate bloca un card anulat sau expirat." });
+
+        card.Status = CardStatus.AdminBlocked;
+        await _db.SaveChangesAsync();
+
+        _logger.LogInformation($"Card blocat de admin: Id={card.Id}");
+
+        await _auditService.LogAsync(
+            action:     "Card.AdminBlock",
+            userId:     CurrentUserId,
+            entityType: "Card",
+            entityId:   card.Id.ToString(),
+            newValues:  "{\"status\":\"AdminBlocked\"}",
+            ipAddress:  GetClientIp(),
+            userAgent:  GetUserAgent());
+
+        return Ok(CardResponse.FromCard(card));
     }
 }

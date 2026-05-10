@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bankingapp.data.model.auth.RegisterRequest
 import com.example.bankingapp.data.repository.AuthRepository
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -224,7 +225,7 @@ class RegisterViewModel(application: Application) : AndroidViewModel(application
                     it.copy(isLoading = false, isSuccess = true, registeredEmail = s.email.trim())
                 }
             } catch (e: retrofit2.HttpException) {
-                val message = when (e.code()) {
+                val message = e.parseApiMessage() ?: when (e.code()) {
                     409  -> "Există deja un cont cu acest email."
                     400  -> "Date invalide. Verificați câmpurile."
                     else -> "Eroare server (${e.code()}). Încercați din nou."

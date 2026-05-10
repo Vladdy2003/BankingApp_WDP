@@ -89,6 +89,9 @@ fun CardsListScreen(
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Refresh la fiecare revenire în tab (după prima încărcare)
+    LaunchedEffect(Unit) { viewModel.refreshOnResume() }
+
     LaunchedEffect(uiState.error) {
         uiState.error?.let {
             snackbarHostState.showSnackbar(it)
@@ -260,7 +263,7 @@ private fun CardItem(
                             }
                         }
                     }
-                    "Blocked", "2" -> {
+                    "Blocked", "1" -> {
                         val successColor = if (isDark) BaSuccessDark else BaSuccess
                         OutlinedButton(
                             onClick  = onUnblock,
@@ -285,6 +288,10 @@ private fun CardItem(
                             }
                         }
                     }
+                    // AdminBlocked: card locked by admin — user cannot unblock, no action buttons
+                    "AdminBlocked", "5" -> { /* no action buttons — only Detalii shown below */ }
+                    // Cancelled / Expired: card is closed — no action buttons
+                    "Cancelled", "4", "Expired", "2" -> { /* no action buttons */ }
                 }
                 BaGhostButton(
                     text    = "Detalii",
@@ -299,9 +306,11 @@ private fun CardItem(
 
 @Composable
 private fun BankCard(card: CardResponse) {
-    val goldAccent = if (isSystemInDarkTheme()) BaGoldDark else BaGold
-    val isBlocked  = card.status == "Blocked" || card.status == "2"
-    val isExpired  = card.status == "Expired"  || card.status == "3"
+    val goldAccent     = if (isSystemInDarkTheme()) BaGoldDark else BaGold
+    val isBlocked      = card.status == "Blocked"      || card.status == "1"
+    val isAdminBlocked = card.status == "AdminBlocked"  || card.status == "5"
+    val isExpired      = card.status == "Expired"       || card.status == "2"
+    val isCancelled    = card.status == "Cancelled"     || card.status == "4"
     val last4      = card.maskedCardNumber.filter { it.isDigit() }.takeLast(4).ifEmpty { "••••" }
 
     Box(
@@ -375,7 +384,7 @@ private fun BankCard(card: CardResponse) {
             }
         }
 
-        // Overlay BLOCAT
+        // Overlay BLOCAT (user-blocked)
         if (isBlocked) {
             Box(
                 modifier         = Modifier
@@ -389,6 +398,30 @@ private fun BankCard(card: CardResponse) {
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White
                 )
+            }
+        }
+
+        // Overlay BLOCAT ADMIN
+        if (isAdminBlocked) {
+            Box(
+                modifier         = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(BaDanger.copy(alpha = 0.50f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text  = "BLOCAT",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = Color.White
+                    )
+                    Text(
+                        text  = "DE ADMINISTRATOR",
+                        style = MaterialTheme.typography.labelSmall.copy(fontSize = 9.sp),
+                        color = Color.White.copy(alpha = 0.80f)
+                    )
+                }
             }
         }
 
@@ -408,6 +441,23 @@ private fun BankCard(card: CardResponse) {
                 )
             }
         }
+
+        // Overlay ANULAT
+        if (isCancelled) {
+            Box(
+                modifier         = Modifier
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(24.dp))
+                    .background(BaDarkInk3.copy(alpha = 0.55f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text  = "ANULAT",
+                    style = MaterialTheme.typography.titleLarge,
+                    color = Color.White
+                )
+            }
+        }
     }
 }
 
@@ -416,11 +466,13 @@ private fun BankCard(card: CardResponse) {
 @Composable
 private fun CardStatusBadge(status: String, isDark: Boolean) {
     val (label, textColor, bgColor) = when (status) {
-        "Active",  "0" -> Triple("ACTIV",   if (isDark) BaSuccessDark else BaSuccess, (if (isDark) BaSuccessDark else BaSuccess).copy(alpha = 0.15f))
-        "Blocked", "2" -> Triple("BLOCAT",  if (isDark) BaDangerDark  else BaDanger,  (if (isDark) BaDangerDark  else BaDanger).copy(alpha = 0.15f))
-        "Expired", "3" -> Triple("EXPIRAT", Color.Gray, Color.Gray.copy(alpha = 0.15f))
-        "Pending", "1" -> Triple("PENDING", BaGold, BaGold.copy(alpha = 0.15f))
-        else           -> Triple(status.uppercase(), Color.Gray, Color.Gray.copy(alpha = 0.15f))
+        "Active",       "0" -> Triple("ACTIV",        if (isDark) BaSuccessDark else BaSuccess, (if (isDark) BaSuccessDark else BaSuccess).copy(alpha = 0.15f))
+        "Blocked",      "1" -> Triple("BLOCAT",       if (isDark) BaDangerDark  else BaDanger,  (if (isDark) BaDangerDark  else BaDanger).copy(alpha = 0.15f))
+        "Expired",      "2" -> Triple("EXPIRAT",      Color.Gray, Color.Gray.copy(alpha = 0.15f))
+        "Pending",      "3" -> Triple("PENDING",      BaGold, BaGold.copy(alpha = 0.15f))
+        "Cancelled",    "4" -> Triple("ANULAT",       Color.Gray, Color.Gray.copy(alpha = 0.15f))
+        "AdminBlocked", "5" -> Triple("BLOCAT ADMIN", if (isDark) BaDangerDark  else BaDanger,  (if (isDark) BaDangerDark  else BaDanger).copy(alpha = 0.20f))
+        else                -> Triple(status.uppercase(), Color.Gray, Color.Gray.copy(alpha = 0.15f))
     }
     Box(
         modifier = Modifier

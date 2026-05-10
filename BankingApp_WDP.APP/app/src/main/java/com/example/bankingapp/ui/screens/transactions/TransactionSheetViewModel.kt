@@ -12,6 +12,7 @@ import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.repository.TransactionsRepository
 import com.example.bankingapp.data.util.DataRefreshBus
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -209,12 +210,13 @@ class TransactionSheetViewModel(application: Application) : AndroidViewModel(app
     private fun accountCurrency(s: TransactionSheetUiState): String =
         s.accounts.firstOrNull { it.id == s.selectedAccountId }?.currency ?: "MDL"
 
-    private fun httpError(e: retrofit2.HttpException) = when (e.code()) {
-        400  -> "Date invalide."
-        402  -> "Sold insuficient."
-        404  -> "Cont negăsit."
-        else -> "Eroare server (${e.code()})."
-    }
+    private fun httpError(e: retrofit2.HttpException) =
+        e.parseApiMessage() ?: when (e.code()) {
+            400  -> "Date invalide."
+            402  -> "Sold insuficient."
+            404  -> "Cont negăsit."
+            else -> "Eroare server (${e.code()})."
+        }
 }
 
 internal fun formatAmt(v: Double): String =

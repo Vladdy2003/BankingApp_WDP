@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.bankingapp.data.local.TokenManager
+import com.example.bankingapp.data.util.parseApiMessage
 import com.example.bankingapp.data.model.account.AccountResponse
 import com.example.bankingapp.data.model.card.CardResponse
 import com.example.bankingapp.data.model.report.MonthlyBreakdown
@@ -109,7 +110,7 @@ class DashboardViewModel(application: Application) : AndroidViewModel(applicatio
             } catch (e: Exception) {
                 val message = when (e) {
                     is java.io.IOException -> "Fără conexiune la internet."
-                    is retrofit2.HttpException -> when (e.code()) {
+                    is retrofit2.HttpException -> e.parseApiMessage() ?: when (e.code()) {
                         401  -> "Sesiunea a expirat. Reconectați-vă."
                         403  -> "Nu aveți permisiunea pentru această acțiune."
                         else -> "Eroare server (${e.code()}). Încercați din nou."

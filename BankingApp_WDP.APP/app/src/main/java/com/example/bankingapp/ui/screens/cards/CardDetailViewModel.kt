@@ -10,6 +10,7 @@ import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.repository.CardsRepository
 import com.example.bankingapp.data.local.TokenManager
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,7 +72,7 @@ class CardDetailViewModel(application: Application) : AndroidViewModel(applicati
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     401  -> "Sesiunea a expirat."
                     404  -> "Cardul nu a fost găsit."
                     else -> "Eroare server (${e.code()})."
@@ -100,7 +101,8 @@ class CardDetailViewModel(application: Application) : AndroidViewModel(applicati
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(isBlocking = false, actionError = "Nu s-a putut bloca cardul.") }
+                val msg = e.parseApiMessage() ?: "Nu s-a putut bloca cardul."
+                _uiState.update { it.copy(isBlocking = false, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(isBlocking = false, actionError = "Fără conexiune la internet.") }
             }
@@ -119,7 +121,11 @@ class CardDetailViewModel(application: Application) : AndroidViewModel(applicati
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(isBlocking = false, actionError = "Nu s-a putut debloca cardul.") }
+                val msg = e.parseApiMessage() ?: when (e.code()) {
+                    403  -> "Cardul a fost blocat de administrator și nu poate fi deblocat."
+                    else -> "Nu s-a putut debloca cardul."
+                }
+                _uiState.update { it.copy(isBlocking = false, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(isBlocking = false, actionError = "Fără conexiune la internet.") }
             }
@@ -165,7 +171,8 @@ class CardDetailViewModel(application: Application) : AndroidViewModel(applicati
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(isUpdatingLimits = false, actionError = "Nu s-au putut actualiza limitele.") }
+                val msg = e.parseApiMessage() ?: "Nu s-au putut actualiza limitele."
+                _uiState.update { it.copy(isUpdatingLimits = false, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(isUpdatingLimits = false, actionError = "Fără conexiune la internet.") }
             }
@@ -184,7 +191,8 @@ class CardDetailViewModel(application: Application) : AndroidViewModel(applicati
                 cardsRepository.deleteCard(cardId)
                 _uiState.update { it.copy(isDeleting = false, cardDeleted = true) }
             } catch (e: retrofit2.HttpException) {
-                _uiState.update { it.copy(isDeleting = false, actionError = "Nu s-a putut închide cardul.") }
+                val msg = e.parseApiMessage() ?: "Nu s-a putut închide cardul."
+                _uiState.update { it.copy(isDeleting = false, actionError = msg) }
             } catch (e: java.io.IOException) {
                 _uiState.update { it.copy(isDeleting = false, actionError = "Fără conexiune la internet.") }
             }

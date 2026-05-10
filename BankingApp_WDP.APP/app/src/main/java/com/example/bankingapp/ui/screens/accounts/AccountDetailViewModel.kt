@@ -10,6 +10,7 @@ import com.example.bankingapp.data.model.transaction.TransactionResponse
 import com.example.bankingapp.data.network.RetrofitClient
 import com.example.bankingapp.data.repository.AccountsRepository
 import com.example.bankingapp.data.util.DataRefreshBus
+import com.example.bankingapp.data.util.parseApiMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -85,7 +86,7 @@ class AccountDetailViewModel(application: Application) : AndroidViewModel(applic
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     401  -> "Sesiunea a expirat."
                     404  -> "Contul nu a fost găsit."
                     else -> "Eroare server (${e.code()})."
@@ -181,7 +182,7 @@ class AccountDetailViewModel(application: Application) : AndroidViewModel(applic
                     )
                 }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     401  -> "Sesiunea a expirat."
                     else -> "Eroare la actualizarea contului."
                 }
@@ -204,7 +205,7 @@ class AccountDetailViewModel(application: Application) : AndroidViewModel(applic
                 repository.deleteAccount(accountId)
                 _uiState.update { it.copy(isDeleting = false, showCloseDialog = false, accountClosed = true) }
             } catch (e: retrofit2.HttpException) {
-                val msg = when (e.code()) {
+                val msg = e.parseApiMessage() ?: when (e.code()) {
                     400  -> "Nu se poate închide contul. Asigurați-vă că soldul este 0."
                     401  -> "Sesiunea a expirat."
                     else -> "Eroare la închiderea contului."
