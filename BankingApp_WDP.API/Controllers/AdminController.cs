@@ -9,7 +9,6 @@ namespace BankingApp.Controllers;
 
 [ApiController]
 [Route("api/admin")]
-[Authorize(Roles = "Admin")]
 public class AdminController : ControllerBase
 {
     private readonly AppDbContext _db;

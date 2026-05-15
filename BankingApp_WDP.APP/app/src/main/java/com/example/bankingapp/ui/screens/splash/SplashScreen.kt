@@ -146,7 +146,7 @@ fun SplashScreen(
 
             // Tagline — DM Sans Light, tertiary tone
             Text(
-                text  = "Moldova. Simplu. Sigur.",
+                text  = "Simplu. Rapid. Sigur.",
                 style = TextStyle(
                     fontFamily    = DmSans,
                     fontSize      = 12.sp,
