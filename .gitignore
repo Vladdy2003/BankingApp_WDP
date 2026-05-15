@@ -361,3 +361,7 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+/BankingApp_WDP/appsettings.json
+/BankingApp_WDP.APP/.idea
+/BankingApp_WDP.API/appsettings.Development.json
+/BankingApp_WDP.API/appsettings.Development.json
